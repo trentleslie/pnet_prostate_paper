@@ -2,7 +2,7 @@ import logging
 import warnings
 import numpy as np
 import pandas as pd
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 
 
 # http://alexadam.ca/ml/2018/08/03/early-stopping.html

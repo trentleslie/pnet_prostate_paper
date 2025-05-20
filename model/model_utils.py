@@ -1,26 +1,26 @@
-import cPickle
+import pickle
 import logging
 import os
 import time
 
-from keras.models import Sequential
+from tensorflow.keras.models import Sequential
 from matplotlib import pyplot as plt
 
 
 def save_model(model, filename):
-    print 'saving model in', filename
-    f = file(filename + '.pkl', 'wb')
+    print('saving model in', filename)
+    f = open(filename + '.pkl', 'wb')
     import sys
     sys.setrecursionlimit(100000)
-    cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
     f.close()
 
 
 def load_model(file_name):
-    f = file(file_name + '.pkl', 'rb')
+    f = open(file_name + '.pkl', 'rb')
     # theano.config.reoptimize_unpickled_function = False
     start = time.time()
-    model = cPickle.load(f)
+    model = pickle.load(f)
     end = time.time()
     elapsed_time = end - start
     return model

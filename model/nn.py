@@ -5,15 +5,17 @@ import os
 
 import numpy as np
 import pandas as pd
-from keras import backend as K
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model as KerasModel
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler
 from sklearn import metrics
 from sklearn.base import BaseEstimator
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
 
-from model.callbacks_custom import GradientCheckpoint, FixedEarlyStopping
+from .callbacks_custom import FixedEarlyStopping, GradientCheckpoint
+from .coef_weights_utils import resolve_gradient_function
 from model.model_utils import get_layers, plot_history, get_coef_importance
 from utils.logs import DebugFolder
 
@@ -129,9 +131,10 @@ class Model(BaseEstimator):
             callbacks.append(saving_callback)
 
         if self.save_gradient:
-            saving_gradient = GradientCheckpoint(self.save_filename, self.feature_importance, X_train, y_train,
-                                                 self.nb_epoch,
-                                                 self.feature_names, period=self.period)
+            # Resolve self.feature_importance (which could be a string) to a callable function
+            gradient_fn_for_callback = resolve_gradient_function(self.feature_importance)
+            saving_gradient = GradientCheckpoint(self.save_filename, gradient_fn_for_callback, X_train, y_train,
+                                                 self.nb_epoch, self.feature_names, period=self.period)
             logging.info("adding a saving_callback%s " % saving_gradient)
             callbacks.append(saving_gradient)
 
@@ -166,7 +169,7 @@ class Model(BaseEstimator):
 
     def get_th(self, y_validate, pred_scores):
         thresholds = np.arange(0.1, 0.9, 0.01)
-        print thresholds
+        print(thresholds)
         scores = []
         for th in thresholds:
             y_pred = pred_scores > th
@@ -182,7 +185,7 @@ class Model(BaseEstimator):
             score['th'] = th
             scores.append(score)
         ret = pd.DataFrame(scores)
-        print ret
+        print(ret)
         best = ret[ret.f1 == max(ret.f1)]
         th = best.th.values[0]
         return th
@@ -291,7 +294,7 @@ class Model(BaseEstimator):
                 else:
                     prediction_scores = prediction_scores[-1]
 
-        print np.array(prediction_scores).shape
+        print(np.array(prediction_scores).shape)
         return np.array(prediction_scores)
 
     def predict_proba(self, X_test):
@@ -303,7 +306,7 @@ class Model(BaseEstimator):
         ret = np.ones((n_samples, 2))
         ret[:, 0] = 1. - prediction_scores.ravel()
         ret[:, 1] = prediction_scores.ravel()
-        print ret.shape
+        print(ret.shape)
         return ret
 
     def score(self, x_test, y_test):
@@ -311,30 +314,66 @@ class Model(BaseEstimator):
         return accuracy_score(y_test, y_pred)
 
     def get_layer_output(self, layer_name, X):
-        layer = self.model.get_layer(layer_name)
-        inp = self.model.input
-        functor = K.function(inputs=[inp, K.learning_phase()], outputs=[layer.output])  # evaluation function
-        layer_outs = functor([X, 0.])
+        target_layer_output = self.model.get_layer(layer_name).output
+        # Create a new model that outputs the target layer's activations
+        # self.model.inputs is a list, safer for multi-input models
+        partial_model = KerasModel(inputs=self.model.inputs, outputs=target_layer_output)
+        # Call the model with training=False for inference mode
+        layer_outs = partial_model(X, training=False)
         return layer_outs
 
     def get_layer_outputs(self, X):
-        inp = self.model.input
-        layers = get_layers(self.model)[1:]
-        layer_names = []
-        for l in layers:
-            layer_names.append(l.name)
-        outputs = [layer.get_output_at(0) for layer in layers]  # all layer outputs
-        functor = K.function(inputs=[inp, K.learning_phase()], outputs=outputs)  # evaluation function
-        layer_outs = functor([X, 0.])
-        ret = dict(zip(layer_names, layer_outs))
+        # get_layers (from model_utils) recursively flattens the model layers.
+        # The [1:] slice skips the first layer, mimicking original behavior.
+        if len(self.model.layers) == 0:
+            return {}
+        # layers_to_extract = get_layers(self.model)[1:] # Original use of get_layers
+        # In TF2, self.model.layers provides a flat list. If get_layers is still needed for deep flattening:
+        all_model_layers = get_layers(self.model)
+        if len(all_model_layers) <= 1:
+            return {} # Not enough layers to skip the first and have some left
+        layers_to_extract = all_model_layers[1:]
+
+        if not layers_to_extract:
+            return {}
+
+        layer_names = [layer.name for layer in layers_to_extract]
+        # Use .output for TF2 compatibility
+        target_outputs = [layer.output for layer in layers_to_extract]
+
+        # Create a new model that outputs all these layers' activations
+        partial_model = KerasModel(inputs=self.model.inputs, outputs=target_outputs)
+
+        # Call the model with training=False for inference mode
+        all_layer_activations = partial_model(X, training=False)
+
+        # Ensure all_layer_activations is a list if target_outputs had only one element,
+        # as K.function previously always returned a list of outputs.
+        if len(target_outputs) == 1 and not isinstance(all_layer_activations, list):
+            all_layer_activations = [all_layer_activations]
+            
+        ret = dict(zip(layer_names, all_layer_activations))
         return ret
 
     def save_model(self, filename):
-        model_json = self.model.to_json()
-        json_file_name = filename.replace('.h5', '.json')
-        with open(json_file_name, "w") as json_file:
-            json_file.write(model_json)
-        self.model.save_weights(filename)
+        self.model.save(filename)
+        logging.info(f"Model saved to {filename} using model.save()")
+
+        # Attempt to save architecture as JSON for potential backward compatibility
+        # or for tools that might expect it.
+        json_file_name = filename
+        if filename.lower().endswith('.h5'):
+            json_file_name = filename.replace('.h5', '.json').replace('.H5', '.json')
+        else: # Assuming SavedModel format (directory)
+            json_file_name = os.path.join(filename, 'model_architecture.json')
+        
+        try:
+            model_json = self.model.to_json()
+            with open(json_file_name, "w") as json_file:
+                json_file.write(model_json)
+            logging.info(f"Model architecture additionally saved to {json_file_name}")
+        except Exception as e:
+            logging.warning(f"Could not save model architecture to JSON {json_file_name}: {e}")
 
     def load_model(self, filename):
         ret = self.build_fn(**self.model_params)
