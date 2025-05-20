@@ -22,10 +22,16 @@ Date: 2025-05-20
     *   Updated `.gitignore` to exclude common unnecessary files (e.g., `*.bak`, Python cache).
     *   Committed all outstanding changes (TF2 refactoring, analysis script updates, new project structure files from Claude) into 5 logical commits.
     *   Successfully pushed all local commits on the `master` branch to the remote repository (`origin/master`).
+*   **Roadmap Management & Planning Initiation (Cascade & USER):**
+    *   Created `/procedure/pnet_prostate_paper/roadmap/1_planning/STAGE_GATE_PROMPT_PLAN.md` to guide AI-assisted planning document generation.
+    *   Identified and created backlog items for two new features: `FP001_address_get_coef_importance.md` and `FP002_handle_missing_params_yml.md` in `/procedure/pnet_prostate_paper/roadmap/0_backlog/`.
+    *   Processed these backlog items using `STAGE_GATE_PROMPT_PLAN.md`: created dedicated planning directories (`/procedure/pnet_prostate_paper/roadmap/1_planning/FP001_address_get_coef_importance/` and `/procedure/pnet_prostate_paper/roadmap/1_planning/FP002_handle_missing_params_yml/`) and populated them with initial `README.md`, `SPEC.md`, `DESIGN.md`, and `PLAN.md` files.
+    *   Moved the original idea files from `0_backlog/` into their respective new planning directories.
+    *   Committed and pushed all roadmap updates to the `origin/master` branch.
 
 ## 2. Current Project State
 
-*   **Overall:** The project is actively migrating to Python 3.11 and TensorFlow 2.x. Significant progress has been made on refactoring Keras-dependent utilities and planning the update of core model-building functions.
+*   **Overall:** The project is actively migrating to Python 3.11 and TensorFlow 2.x. Significant progress has been made on refactoring Keras-dependent utilities, and initial planning documents have been generated for addressing the `get_coef_importance` issue and the missing `_params.yml` files. The core model-building functions are next for TF2.x refactoring based on Claude's plans.
 *   **Keras Utilities (`/procedure/pnet_prostate_paper/model/coef_weights_utils.py`, `/procedure/pnet_prostate_paper/model/nn.py`):**
     *   Functions related to Keras backend operations (e.g., `get_layer_output`, `get_gradient_layer`) have been largely refactored.
     *   Custom callbacks (`FixedEarlyStopping`, `GradientCheckpoint`) are now mostly TF2.x compatible, with `GradientCheckpoint`'s `gradient_function` handling being a key recent improvement.
@@ -51,6 +57,9 @@ Date: 2025-05-20
     *   `/procedure/pnet_prostate_paper/analysis/prepare_data.py`
     *   (Claude) `/procedure/pnet_prostate_paper/prostate_models.py`
     *   (Claude) `/procedure/pnet_prostate_paper/model/builders_utils.py`
+    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/STAGE_GATE_PROMPT_PLAN.md`
+    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/FP001_address_get_coef_importance/` (and its planning documents)
+    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/FP002_handle_missing_params_yml/` (and its planning documents)
 
 ## 4. Next Steps (Based on Roadmap & Current State)
 
@@ -64,15 +73,15 @@ Date: 2025-05-20
     *   Investigate why the `/procedure/pnet_prostate_paper/_logs/` directory and its contents are missing.
     *   If they cannot be recovered, develop a strategy for creating mock/template parameter files or a minimal test model setup to allow testing of `GradientCheckpoint` and model loading.
 *   **Testing:** After implementation, conduct thorough testing of refactored model building functions and the `GradientCheckpoint` callback.
-*   **Roadmap Updates (To be performed by USER using `/procedure/pnet_prostate_paper/roadmap/HOW_TO_UPDATE_ROADMAP_STAGES.md`):**
-    *   Consider moving "Refactoring `GradientCheckpoint` & Keras Callbacks TF2 Migration" or relevant sub-tasks to `3_completed/`.
-    *   Consider moving "Refactoring model-building functions (`build_pnet2`, `get_pnet`)" from `1_planning/` to `2_inprogress/` (as Claude's planning is complete, and implementation is next).
-    *   Consider creating/moving "Addressing `nn.Model.get_coef_importance` issue" to `1_planning/`.
-    *   Consider creating/moving "Strategy for missing `_params.yml` files / Test Data Generation" to `1_planning/`.
-    *   Consider archiving or re-scoping "Refactor `pnet_multitask_graph`" from `0_backlog/` based on Claude's finding that it doesn't exist, perhaps replacing it with the `build_pnet2` task.
+*   **Roadmap Item Progression:**
+    *   The tasks "Addressing `nn.Model.get_coef_importance` issue" and "Strategy for missing `_params.yml` files / Test Data Generation" have now moved into the `1_planning` stage, with initial planning documents (`README.md`, `SPEC.md`, `DESIGN.md`, `PLAN.md`) created in their respective directories:
+        *   `/procedure/pnet_prostate_paper/roadmap/1_planning/FP001_address_get_coef_importance/`
+        *   `/procedure/pnet_prostate_paper/roadmap/1_planning/FP002_handle_missing_params_yml/`
+    *   Next steps for these items involve following their `PLAN.md` files to conduct detailed investigation and implementation.
+    *   The sub-tasks related to "Refactoring `GradientCheckpoint` & Keras Callbacks TF2 Migration" are considered complete within the broader `05_tensorflow_migration.md` task.
+    *   The sub-task "Refactoring model-building functions (`build_pnet2`, `get_pnet`)" remains the primary focus for implementation within `05_tensorflow_migration.md`.
 
 ## 5. Open Questions & Considerations
 
 *   **Source of `_logs/` data:** Where are the original log files and `*_params.yml` configurations stored? Are they part of the Git repository, or were they generated artifacts not committed? This is crucial for testing.
 *   **Impact of missing `get_coef_importance`:** How critical is the `nn.Model.coef_` attribute for downstream tasks? This will determine the priority of fixing `nn.Model.get_coef_importance`.
-*   **Testing Strategy without Parameter Files:** If the original parameter files are unavailable, how can we best create representative test cases for models using `GradientCheckpoint` and `feature_importance` settings? This might involve creating a simplified, self-contained model and data setup for testing callback mechanisms.

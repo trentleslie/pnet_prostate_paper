@@ -1,37 +1,35 @@
-## Context Brief:
-We are actively refactoring the P-NET codebase for Python 3.11 and TensorFlow 2.x compatibility. The current focus is on `/procedure/pnet_prostate_paper/model/coef_weights_utils.py`, which contains critical functions for gradient and feature importance calculations. Several Python 2 `print` statements have been fixed, but one `SyntaxError` remains, and core TensorFlow 1.x patterns (like `K.function`, `K.gradients`) need conversion to TF2's `tf.GradientTape`.
+## Suggested Next Prompt for pnet_prostate_paper Project
 
-## Initial Steps:
-1.  Review the project's overall migration plan and context, particularly the TensorFlow migration tasks detailed in `/procedure/pnet_prostate_paper/roadmap/2_inprogress/05_tensorflow_migration.md`.
-2.  Review the latest status update located at `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-05-20-tensorflow-migration-update.md` for detailed recent progress and identified next steps.
+**1. Context Brief:**
+We have successfully updated the project roadmap, creating detailed planning documents for two key backlog items: addressing `nn.Model.get_coef_importance` (`FP001`) and handling missing `_params.yml` files (`FP002`). These items are now in the '1_planning' stage, and all roadmap changes have been committed and pushed. The immediate next coding priority is to implement the TensorFlow 2.x refactoring for the core model-building functions (`build_pnet2`, `get_pnet`) based on Claude's existing detailed plans.
 
-## Work Priorities:
-1.  **Resolve Remaining SyntaxError:** Fix the `SyntaxError: Missing parentheses in call to 'print'` (ID: `212e8fb5-ab49-485a-acf3-39cd29958279`) on line 277 of `/procedure/pnet_prostate_paper/model/coef_weights_utils.py`.
-2.  **Refactor TF1 Patterns in `coef_weights_utils.py`:**
-    *   Identify all uses of `K.function`, `model.optimizer.get_gradients`, and `K.learning_phase()` (or similar TF1 backend/session logic).
-    *   Systematically replace these with TensorFlow 2.x equivalents, primarily using `tf.GradientTape` for gradient calculations and ensuring compatibility with eager execution.
-    *   Address the use of `K.get_session()` in `get_deep_explain_scores`.
-    *   Update `keras.wrappers.scikit_learn.KerasClassifier` in `get_skf_weights`.
-3.  **Test Refactored Functions:** Once `coef_weights_utils.py` is syntactically correct and TF1 patterns are refactored, devise a strategy to test the key functions (e.g., `get_gradient_weights`, `get_weights_gradient_outcome`) for correctness or behavioral consistency.
+**2. Initial Steps:**
+*   Begin by reviewing the overall project context and AI collaboration guidelines documented in `/procedure/pnet_prostate_paper/roadmap/CLAUDE.md`.
+*   Refresh your understanding of the latest progress by reviewing the most recent status update: `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-05-20-tf2-migration-status.md`.
 
-## Key File References:
--   Main file for current work: `/procedure/pnet_prostate_paper/model/coef_weights_utils.py`
--   Depends on: `/procedure/pnet_prostate_paper/model/model_utils.py` (specifically `get_coef_importance`)
--   Impacts: `/procedure/pnet_prostate_paper/model/callbacks_custom.py` (specifically `GradientCheckpoint`)
--   Roadmap: `/procedure/pnet_prostate_paper/roadmap/2_inprogress/05_tensorflow_migration.md`
+**3. Work Priorities:**
+*   **Primary Focus: Implement TF2.x Model Building Refactoring.**
+    *   Based on Claude's technical notes in `/procedure/pnet_prostate_paper/roadmap/technical_notes/tensorflow_migration/`:
+        *   Refactor `build_pnet2` in `/procedure/pnet_prostate_paper/prostate_models.py`.
+        *   Refactor `get_pnet` in `/procedure/pnet_prostate_paper/model/builders_utils.py`.
+        *   Refactor custom layers (`Diagonal`, `SparseTF`) as detailed in Claude's plan.
+*   **Secondary (if time permits or primary is blocked): Advance Planning for `FP001` or `FP002`.**
+    *   Review the `PLAN.md` within `/procedure/pnet_prostate_paper/roadmap/1_planning/FP001_address_get_coef_importance/` and begin executing its investigation/implementation steps.
+    *   Alternatively, review the `PLAN.md` within `/procedure/pnet_prostate_paper/roadmap/1_planning/FP002_handle_missing_params_yml/` and begin its investigation/implementation steps.
 
-## Workflow Integration (Independent Step Example):
-Consider using an AI assistant for targeted refactoring tasks within `coef_weights_utils.py`. For example, after manually identifying a function that uses `K.function` and `K.gradients`:
+**4. Key References:**
+*   Status Update: `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-05-20-tf2-migration-status.md`
+*   TF2 Migration Plan (by Claude): `/procedure/pnet_prostate_paper/roadmap/technical_notes/tensorflow_migration/`
+*   `build_pnet2` target: `/procedure/pnet_prostate_paper/prostate_models.py`
+*   `get_pnet` target: `/procedure/pnet_prostate_paper/model/builders_utils.py`
+*   Planning for `FP001`: `/procedure/pnet_prostate_paper/roadmap/1_planning/FP001_address_get_coef_importance/`
+*   Planning for `FP002`: `/procedure/pnet_prostate_paper/roadmap/1_planning/FP002_handle_missing_params_yml/`
 
-**Prompt to AI (e.g., Claude):**
-"I need to refactor the Python function `get_gradient_layer` (lines X-Y) in the file `/procedure/pnet_prostate_paper/model/coef_weights_utils.py` from TensorFlow 1.x to TensorFlow 2.x.
-The current function uses `model.optimizer.get_gradients` and `K.function` with `K.learning_phase()`.
-Please rewrite this function to use `tf.GradientTape` for gradient calculation, ensuring it's compatible with eager execution. The function should still accept `model`, `X`, `y`, `layer`, and `normalize` as arguments and return the gradients.
-Pay attention to how input tensors and sample weights were handled in the original `K.function` setup and adapt this appropriately for `tf.GradientTape` and direct model calls.
-Here is the relevant snippet of the current function:
-```python
-# [Paste the existing get_gradient_layer function here]
-```
-Ensure all necessary imports from `tensorflow` are included or noted."
-
-This allows for focused, incremental refactoring with AI assistance.
+**5. Workflow Integration with Claude:**
+*   For the primary task of refactoring model-building functions, Claude has already provided a detailed plan. You can use Claude for:
+    *   **Code Generation/Adaptation:** Provide Claude with specific code snippets from `build_pnet2` or `get_pnet` and ask for direct TF2.x equivalents, referencing its previous analysis.
+        *   *Example Prompt for Claude:* "Based on your analysis in `/procedure/pnet_prostate_paper/roadmap/technical_notes/tensorflow_migration/`, please refactor the following Keras 1.x layer definition from `/procedure/pnet_prostate_paper/model/builders_utils.py` (lines X-Y) to be TF2.x compatible: [paste code snippet here]. Ensure all necessary imports from `tensorflow.keras` are included."
+    *   **Debugging:** If you encounter errors during refactoring, provide Claude with the error message and the relevant code section for troubleshooting.
+    *   **Unit Test Ideas:** Once a function is refactored, ask Claude to suggest unit test cases to verify its behavior.
+*   For advancing `FP001` or `FP002`:
+    *   Use Claude to help research specific technical questions outlined in the `PLAN.md` files or to generate boilerplate code for new scripts/modules defined in the design.
