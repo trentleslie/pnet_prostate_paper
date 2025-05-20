@@ -53,7 +53,7 @@ Our approach to this modernization is phased to manage complexity and ensure ste
 
 *   **Phase 4: Integration, Comprehensive Testing & Validation (Future)**
     *   **Prerequisites:**
-        *   Secure access to the datasets used in the original publication (e.g., Armenia et al. cohort, external validation cohorts referenced in Elmarakeby et al., Nature 2021). Refer to the paper's "Data availability" section and supplementary materials.
+        *   Secure [access to the datasets](https://zenodo.org/records/10775529) used in the original publication (e.g., Armenia et al. cohort, external validation cohorts referenced in Elmarakeby et al., Nature 2021). Refer to the paper's "Data availability" section and supplementary materials.
         *   Successfully resolve the missing `_params.yml` files (as per roadmap item `FP002`) to reconstruct original model configurations or establish well-justified new configurations based on paper descriptions.
     *   **Core Model Performance Replication:**
         *   Conduct end-to-end testing of the model's ability to predict disease state (primary vs. metastatic CRPC) using the main dataset.
