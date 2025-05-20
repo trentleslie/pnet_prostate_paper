@@ -17,6 +17,11 @@ Date: 2025-05-20
     *   Identified key TensorFlow 1.x patterns needing updates: import statements (`keras` → `tensorflow.keras`), Python 2 print statements, deprecated Keras parameter names (e.g., `W_regularizer` → `kernel_regularizer`), old model creation syntax, and backend operations.
     *   Developed detailed refactoring plans and provided TF2.x compatible code examples for `build_pnet2`, `get_pnet`, and custom layers (`Diagonal`, `SparseTF`).
     *   All related documentation and examples have been stored in `/procedure/pnet_prostate_paper/roadmap/technical_notes/tensorflow_migration/`.
+*   **Git Repository Management (Cascade & USER):**
+    *   Configured local Git user name and email for the repository.
+    *   Updated `.gitignore` to exclude common unnecessary files (e.g., `*.bak`, Python cache).
+    *   Committed all outstanding changes (TF2 refactoring, analysis script updates, new project structure files from Claude) into 5 logical commits.
+    *   Successfully pushed all local commits on the `master` branch to the remote repository (`origin/master`).
 
 ## 2. Current Project State
 
