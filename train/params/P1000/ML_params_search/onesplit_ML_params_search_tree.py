@@ -4,7 +4,7 @@ from os.path import dirname
 from sklearn.model_selection import ParameterGrid
 
 base_dirname = dirname(dirname(__file__))
-print base_dirname
+print(base_dirname)
 filename = os.path.basename(__file__)
 task = 'classification_binary'
 
@@ -28,12 +28,12 @@ pre = {'type': None}
 features = {}
 
 logistic_params = []
-print len(logistic_params)
+print(len(logistic_params))
 class_weight = {0: 0.75, 1: 1.5}
 tree_params = []
 param_grid = {
-    'min_samples_split': range(10, 500, 20),
-    'max_depth': range(1, 20, 2),
+    'min_samples_split': list(range(10, 500, 20)),
+    'max_depth': list(range(1, 20, 2)),
     'class_weight': [class_weight]
 }
 

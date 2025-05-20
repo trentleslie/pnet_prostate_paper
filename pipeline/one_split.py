@@ -95,7 +95,7 @@ class OneSplitPipeline:
         genes_list = []
         input_shapes = []
         for g in genes:
-            g_df = x_df.loc[:, g].as_matrix()
+            g_df = x_df.loc[:, g].to_numpy()
             input_shapes.append(g_df.shape[1])
             genes_list.append(g_df)
         return genes_list

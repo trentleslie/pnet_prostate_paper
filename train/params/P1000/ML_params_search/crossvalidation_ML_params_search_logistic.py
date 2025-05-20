@@ -4,7 +4,7 @@ from os.path import dirname
 from sklearn.model_selection import ParameterGrid
 
 base_dirname = dirname(dirname(__file__))
-print base_dirname
+print(base_dirname)
 filename = os.path.basename(__file__)
 task = 'classification_binary'
 
@@ -28,14 +28,14 @@ pre = {'type': None}
 features = {}
 
 logistic_params = []
-print len(logistic_params)
+print(len(logistic_params))
 class_weight = {0: 0.75, 1: 1.5}
 grid = {"alpha": [0.0001, 0.001, .009, 0.01, .09, 1, 5, 10], "penalty": ["l1", "l2"], 'loss': ['log'],
         'class_weight': [class_weight]}  # l1 lasso l2 ridge
 param_grid_list = list(ParameterGrid(grid))
 for i, param in enumerate(param_grid_list):
     logistic_params.append({'loss': 'log', 'type': 'sgd', 'id': 'L2 Logistic Regression_{}'.format(i), 'params': param})
-print logistic_params
+print(logistic_params)
 
 models = logistic_params
 
