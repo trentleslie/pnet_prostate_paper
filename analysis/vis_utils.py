@@ -34,22 +34,22 @@ def get_x_y(df_encoded, layers_nodes):
     node_weights = pd.concat([source_weights, target_weights])
     node_weights = node_weights.to_frame()
     node_weights = node_weights.groupby(node_weights.index).max()
-    print layers_nodes
-    print node_weights
+    print(layers_nodes)
+    print(node_weights)
 
     # print node_weights
     node_weights = node_weights.join(layers_nodes)
     node_weights.sort_values(by=['layer', 'value'], ascending=False, inplace=True)
     n_layers = layers_nodes['layer'].max() + 1
     node_weights['x'] = node_weights['layer'] / n_layers
-    print node_weights
+    print(node_weights)
 
     node_weights['layer_weight'] = node_weights.groupby('layer')['value'].transform(pd.Series.sum)
     node_weights['y'] = node_weights.groupby('layer')['value'].transform(pd.Series.cumsum)
 
     node_weights['y'] = (node_weights['y'] - node_weights['value'] / 2) / node_weights['layer_weight'] + 0.05
 
-    print node_weights
+    print(node_weights)
     node_weights.sort_index(inplace=True)
     return node_weights['x'], node_weights['y']
 

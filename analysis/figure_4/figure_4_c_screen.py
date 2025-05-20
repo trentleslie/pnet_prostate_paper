@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 
 # https://stackoverflow.com/questions/32185411/break-in-x-axis-of-matplotlib
 from config_path import PROSTATE_DATA_PATH
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def run():
@@ -18,8 +18,8 @@ def run():
     df.head()
     df = df.groupby(by=df.index).max().sort_values('Z-LFC AVERAGE Enzalutimide')
 
-    print df.head()
-    print df.head(-5)
+    print(df.head())
+    print(df.head(-5))
     fig = plt.figure(figsize=(4, 4))
 
     gs = gridspec.GridSpec(3, 1, height_ratios=[1, 9, 1])
@@ -28,7 +28,7 @@ def run():
     ax2 = plt.subplot(gs[1])
     ax3 = plt.subplot(gs[2])
 
-    x = range(df.shape[0])
+    x = list(range(df.shape[0]))
 
     ax1.plot(x, df['Z-LFC AVERAGE Enzalutimide'], '.')
     ax2.plot(x, df['Z-LFC AVERAGE Enzalutimide'], '.')
@@ -81,14 +81,14 @@ def run():
     direction = [-1, 1] * 5
     x = [0, 30, -30, 0, ]
     y = [0, -2, +4, 0]
-    print direction
+    print(direction)
     for i, gene in enumerate(interesting):
         if gene in df.index:
-            print gene
+            print(gene)
             ind = df.index.str.contains(gene)
             x = list(ind).index(True)
             y = df['Z-LFC AVERAGE Enzalutimide'][x]
-            print gene, x, y
+            print(gene, x, y)
             # ax2.plot(x, y, 'r*')
             # ax2.text(x+170, y, gene, fontdict=dict( fontsize=8))
             xytext = (direction[i] * 30, -2)

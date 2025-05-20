@@ -19,7 +19,7 @@ from config_path import PROSTATE_LOG_PATH, PLOTS_PATH
 def plot_box_plot(df, axis):
     df.columns = df.columns.swaplevel(0, 1)
     metrics = df.columns.levels[0]
-    print 'metrics', metrics
+    print('metrics', metrics)
     for i, c in enumerate(metrics):
         dd = df[c].copy()
         dd.columns = [mapping_dict_cols[a] for a in dd.columns]
@@ -67,7 +67,7 @@ def plot_confusion_matrix_all(ax, adjust_threshold=False):
         cax = divider.append_axes('right', size='5%', pad=0.05)
         cb = fig.colorbar(im, cax=cax, orientation='vertical')
         cb.ax.tick_params(labelsize=fontsize)
-        cb.ax.tick_params(axis=u'both', which=u'both', length=0)
+        cb.ax.tick_params(axis='both', which='both', length=0)
         cb.outline.set_visible(False)
         tick_marks = np.arange(len(classes))
         if labels is None:
@@ -76,7 +76,7 @@ def plot_confusion_matrix_all(ax, adjust_threshold=False):
             fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
         thresh = cm.max() / 2.
-        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
             text = fmt.format(labels[i, j], cm[i, j])
             ax.text(j, i, text,
                     horizontalalignment="center",
@@ -105,7 +105,7 @@ def plot_confusion_matrix_all(ax, adjust_threshold=False):
     y_t = df.y
     y_pred_test = df.pred
     cnf_matrix = confusion_matrix(y_t, y_pred_test)
-    print cnf_matrix
+    print(cnf_matrix)
 
     cm = np.array(cnf_matrix)
     classes = ['Primary', 'Metastatic']
@@ -115,7 +115,7 @@ def plot_confusion_matrix_all(ax, adjust_threshold=False):
                           labels,
                           normalize=True,
                           cmap=plt.cm.Reds)
-    ax.tick_params(axis=u'both', which=u'both', length=0)
+    ax.tick_params(axis='both', which='both', length=0)
 
 
 def plot_auc_all(ax):
@@ -157,7 +157,7 @@ def plot_auc_all(ax):
     #     df = pd.read_csv(join(models_base_dir, m + '_data_0_testing.csv'), sep=',', index_col=0, header=[0, 1])
     #     all_models_dict[m] = df
     all_models_dict = get_prc_data()
-    n = len(all_models_dict.keys())
+    n = len(list(all_models_dict.keys()))
     # sort based on area under prc
     colors = sns.color_palette(None, n)
     sorted_dict = {}
@@ -170,7 +170,7 @@ def plot_auc_all(ax):
         average_auc = average_precision_score(y_test, y_pred_score)
         sorted_dict[k] = average_auc
 
-    sorted_dict = sorted(sorted_dict.items(), key=lambda kv: kv[1])
+    sorted_dict = sorted(list(sorted_dict.items()), key=lambda kv: kv[1])
     sorted_dict = collections.OrderedDict(sorted_dict)
 
     for i, k in enumerate(sorted_dict.keys()):
@@ -232,7 +232,7 @@ fontproperties = {'family': 'Arial', 'weight': 'normal', 'size': 6}
 
 my_pal = {}
 for i, m in enumerate(models):
-    print current_palette[i]
+    print(current_palette[i])
     my_pal[m] = current_palette[i]
 
 

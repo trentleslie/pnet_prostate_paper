@@ -25,7 +25,7 @@ def get_data(loader, use_data, dropAR):
     if dropAR:
         x = pd.DataFrame(X, columns=columns)
         data_types = x.columns.levels[1].unique()
-        print data_types
+        print(data_types)
         if 'cnv' in data_types:
             ind = (x[('AR', 'cnv')] <= 0.) & (x[('AR', 'mut_important')] == 0)
         elif 'cnv_amp' in data_types:
@@ -33,18 +33,18 @@ def get_data(loader, use_data, dropAR):
 
         if len(ind.shape) > 1:
             ind = ind.all(axis=1)
-        print ind
+        print(ind)
         x = x.ix[ind.values,]
 
         X = x.values
         Y = Y[ind.values]
         info = [info[i] for i in ind.values if i]
 
-        print X.shape, Y.shape, len(info)
+        print(X.shape, Y.shape, len(info))
 
         use_data = use_data + '_dropAR'
-    print 'shapes'
-    print X.shape, Y.shape, len(info)
+    print('shapes')
+    print(X.shape, Y.shape, len(info))
     return X, Y, info
 
 
@@ -91,10 +91,10 @@ def get_node_importance(nn_model, x_train, y_train, importance_type, target):
     # model.compile('sgd', 'mse')
     model = nn_model.model
     ret = get_coef_importance(model, x_train, y_train, target=target, feature_importance=importance_type, detailed=True)
-    print type(ret)
+    print(type(ret))
     if type(ret) is tuple:
         coef, coef_detailed = ret
-        print 'coef_detailed', len(coef_detailed)
+        print('coef_detailed', len(coef_detailed))
 
     else:
         coef = ret
@@ -130,9 +130,9 @@ def get_link_weights_df(link_weights, features):
     link_weights_df = []
     df = pd.DataFrame(link_weights[0], index=features[0])
     link_weights_df.append(df)
-    print df.head()
+    print(df.head())
     for i, (rows, cols) in enumerate(zip(features[1:], features[2:])):
-        print len(rows), len(cols)
+        print(len(rows), len(cols))
         df = pd.DataFrame(link_weights[i + 1], index=rows, columns=cols)
         link_weights_df.append(df)
 
@@ -166,7 +166,7 @@ def get_link_weights_df_(model, features, layer_names):
         layer_ind = layer_names.index(layer_name)
         previous_layer_name = layer_names[layer_ind - 1]
 
-        print  i, previous_layer_name, layer_name
+        print(i, previous_layer_name, layer_name)
         if i == 0 or i == (len(layer_names) - 2):
             cols = ['root']
         else:
@@ -202,7 +202,7 @@ def get_link_weights(model):
                 w = csr_matrix((w, (row_ind, col_ind)), shape=l.kernel_shape)
                 w = w.todense()
             hidden_layers_weights.append(w)
-            print l.name, len(l.get_weights()), w.shape
+            print(l.name, len(l.get_weights()), w.shape)
     return hidden_layers_weights
 
 
@@ -242,14 +242,14 @@ def get_degrees(maps, layers):
         fan_in2 = layer2.abs().sum(axis=0)
 
         if i == 0:
-            print i
+            print(i)
             l = layers[0]
             df = pd.concat([fan_out1, fan_out1], keys=['degree', 'fanout'], axis=1)
             df['fanin'] = 1.
             stats[l] = df
 
-        print '{}- layer {} :fan-in {}, fan-out {}'.format(i, l1, fan_in1.shape, fan_out2.shape)
-        print '{}- layer {} :fan-in {}, fan-out {}'.format(i, l1, fan_in2.shape, fan_out1.shape)
+        print('{}- layer {} :fan-in {}, fan-out {}'.format(i, l1, fan_in1.shape, fan_out2.shape))
+        print('{}- layer {} :fan-in {}, fan-out {}'.format(i, l1, fan_in2.shape, fan_out1.shape))
 
         df = pd.concat([fan_in1, fan_out2], keys=['fanin', 'fanout'], axis=1)
         df['degree'] = df['fanin'] + df['fanout']
@@ -262,7 +262,7 @@ def adjust_coef_with_graph_degree(node_importance_dfs, stats, layer_names, savin
     ret = []
     # for i, (grad, graph) in enumerate(zip(node_importance_dfs, degrees)):
     for i, l in enumerate(layer_names):
-        print l
+        print(l)
         grad = node_importance_dfs[l]
         graph = stats[l]['degree'].to_frame(name='coef_graph')
 
@@ -307,7 +307,7 @@ def get_connections(maps, layer_names):
         layer = layer.unstack().reset_index()
         layer = layer[layer.value != 0]
         layer['layer'] = i + 1
-        print layer.head()
+        print(layer.head())
         layers.append(layer)
     conn = pd.concat(layers)
 
@@ -324,7 +324,7 @@ def get_high_nodes(node_importance, sigma=2):
     for l in layers_id:
         node_importance_layer = node_importance[node_importance.layer == l]
         n = get_nlargeest_ind(node_importance_layer.coef_combined, sigma)
-        print l, n
+        print(l, n)
         node_importance_layer = node_importance_layer.coef_combined.abs().nlargest(n)
         node_importance_layers.append(node_importance_layer)
 

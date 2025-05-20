@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 
 from config_path import PROSTATE_DATA_PATH
-from setup import saving_dir
+from .setup import saving_dir
 
 
 # tips = sns.load_dataset("tips")
@@ -18,7 +18,7 @@ def label_diff(ax, i, j, text, X, Y, stdv, yfactor=1.2):
 
     y = yfactor * max(Y[i] + stdv[i], Y[j] + stdv[j])
     y_text = y + 0.04
-    print x, y, y_text
+    print(x, y, y_text)
     dx = abs(X[i] - X[j])
 
     # props = {'connectionstyle':'bar','arrowstyle':'-','shrinkA':20,'shrinkB':20,'linewidth':1}
@@ -37,10 +37,10 @@ def run():
     df = pd.read_excel(filename, sheet_name='sgRNA Data')
     cols = ['sgGFP', 'sgMDM4-1', 'sgMDM4-2']
     df = df[cols]
-    print df.head()
+    print(df.head())
     mean_impf = df.mean()
     sem_impf = df.std()
-    print sem_impf
+    print(sem_impf)
     yerr_pos = sem_impf.copy()
 
     # sns.barplot()

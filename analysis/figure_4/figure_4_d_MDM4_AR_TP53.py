@@ -30,7 +30,7 @@ x_df_3[x_df_3 < 1] = 0  # remove single copy
 
 x_df_3 = x_df_3.T.reset_index().groupby('level_0').sum()  # all events (OR)
 x_df_3[x_df_3 > 0] = 1  # binarize
-print x_df_3.shape
+print(x_df_3.shape)
 
 x_df_3_binary = x_df_3.T > 0.
 x_df_3_binary = x_df_3_binary.set_index(selected_genes)
@@ -39,7 +39,7 @@ y_ind = y > 0
 x_df_mets_3 = x_df_3.T[y_ind].T
 
 x_df_mets_3_binary = x_df_mets_3.T > 0.
-print x_df_mets_3_binary.shape
+print(x_df_mets_3_binary.shape)
 
 x_df_mets_3_binary = x_df_mets_3_binary.set_index(selected_genes)
 

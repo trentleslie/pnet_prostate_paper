@@ -56,15 +56,15 @@ def plot_prc_all(ax):
         average_prc = average_precision_score(y_test, y_pred_score)
         sorted_dict[k] = average_prc
 
-    sorted_dict = sorted(sorted_dict.items(), key=lambda kv: kv[1])
+    sorted_dict = sorted(list(sorted_dict.items()), key=lambda kv: kv[1])
     sorted_dict = collections.OrderedDict(sorted_dict)
-    print 'sorted_dict', sorted_dict
+    print('sorted_dict', sorted_dict)
 
     for i, k in enumerate(sorted_dict.keys()):
         df = all_models_dict[k]
         y_test = df['y']
         y_pred_score = df['pred_scores']
-        print i, k
+        print(i, k)
         plot_prc(ax, y_test, y_pred_score, None, label=k, color=colors[i])
 
     f_scores = np.linspace(0.2, 0.8, num=4)
@@ -119,7 +119,7 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
     cax = divider.append_axes('right', size='5%', pad=0.05)
     cb = fig.colorbar(im, cax=cax, orientation='vertical')
     cb.ax.tick_params(labelsize=fontsize)
-    cb.ax.tick_params(axis=u'both', which=u'both', length=0)
+    cb.ax.tick_params(axis='both', which='both', length=0)
     cb.outline.set_visible(False)
     tick_marks = np.arange(len(classes))
     if labels is None:
@@ -128,7 +128,7 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
         fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
     thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
         text = fmt.format(labels[i, j], cm[i, j])
         ax.text(j, i, text,
                 horizontalalignment="center",
@@ -157,7 +157,7 @@ def plot_confusion_matrix_all(ax):
     y_t = df.y
     y_pred_test = df.pred
     cnf_matrix = confusion_matrix(y_t, y_pred_test)
-    print cnf_matrix
+    print(cnf_matrix)
 
     cm = np.array(cnf_matrix)
     classes = ['Primary', 'Metastatic']
@@ -167,7 +167,7 @@ def plot_confusion_matrix_all(ax):
                           labels,
                           normalize=True,
                           cmap=plt.cm.Reds)
-    ax.tick_params(axis=u'both', which=u'both', length=0)
+    ax.tick_params(axis='both', which='both', length=0)
 
 
 fontsize = 5

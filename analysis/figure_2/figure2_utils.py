@@ -32,7 +32,7 @@ def get_pnet_preformance(col='f1'):
 
 
 def get_stats(df_pnet, df_dense):
-    print df_pnet.shape, df_dense.shape
+    print(df_pnet.shape, df_dense.shape)
     pvalues = []
     for c1, c2 in zip(df_pnet.columns, df_dense.columns):
         # print c
@@ -41,7 +41,7 @@ def get_stats(df_pnet, df_dense):
 
         twosample_results = stats.ttest_ind(x, y)
         pvalue = twosample_results[1] / 2
-        print pvalue
+        print(pvalue)
         pvalues.append(pvalue)
     return pvalues
 

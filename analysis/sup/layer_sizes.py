@@ -1,6 +1,6 @@
 from os.path import join
 
-from setup import saving_dir
+from .setup import saving_dir
 
 nodes = [27687,
          9229,
@@ -20,7 +20,7 @@ def run():
 
     df = pd.DataFrame(nodes, index=['layer 0', 'layer 1', 'layer 2', 'layer 3', 'layer 4', 'layer 5', 'layer 6'],
                       columns=['Number of nodes'])
-    print  df
+    print(df)
     ax = sns.barplot(x=df.index, y='Number of nodes', data=df)
     ax.set_yscale("log")
 

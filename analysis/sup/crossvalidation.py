@@ -6,7 +6,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt, ticker
 
 from config_path import PROSTATE_LOG_PATH
-from setup import saving_dir
+from .setup import saving_dir
 
 custom_rcParams = {
     'figure.figsize': (8, 3),
@@ -32,7 +32,7 @@ custom_rcParams = {
 def plot_box_plot(df, save_dir):
     df.columns = df.columns.swaplevel(0, 1)
     columns = df.columns.levels[0]
-    print 'columns', columns
+    print('columns', columns)
     for c in columns:
         plt.figure(figsize=(7, 5))
         dd = df[c].copy()
@@ -85,17 +85,17 @@ current_palette = sns.color_palette(None, len(models))
 
 my_pal = {}
 for i, m in enumerate(models):
-    print current_palette[i]
+    print(current_palette[i])
     my_pal[m] = current_palette[i]
 
 
 def run():
     df = pd.read_csv(join(models_base_dir, 'folds.csv'), sep=',', index_col=0, header=[0, 1])
-    print df.head()
+    print(df.head())
 
     pnet_base_dir = join(base_dir, 'pnet/crossvalidation_average_reg_10_tanh')
     pnet_df = pd.read_csv(join(pnet_base_dir, 'folds.csv'), sep=',', index_col=0, header=[0, 1])
-    print pnet_df.head()
+    print(pnet_df.head())
 
     df = pd.concat([pnet_df, df], axis=1)
 

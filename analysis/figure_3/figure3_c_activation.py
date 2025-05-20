@@ -7,7 +7,7 @@ import seaborn as sns
 from scipy.stats import pearsonr
 
 from analysis.data_extraction_utils import get_pathway_names
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def plot_high_genes_violinplot(df_in, ax, y, name, saving_dir):
@@ -49,11 +49,11 @@ def plot_high_genes_pairplot(df_in, y, name, saving_dir):
     dd["group"] = y
     dd['group'] = dd['group'].replace(0, '0-Primary')
     dd['group'] = dd['group'].replace(1, '1-Metastatic')
-    print dd.head()
+    print(dd.head())
     g = sns.pairplot(dd, hue="group")
 
     g.map(corrfunc)
-    print 'saving pairplot', filename
+    print('saving pairplot', filename)
     plt.savefig(filename)
     plt.savefig(filename + '.pdf')
     plt.close()

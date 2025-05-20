@@ -57,7 +57,7 @@ def plot_prc_all(ax):
         ax.tick_params(axis='both', which='minor', labelsize=5)
 
     all_models_dict = get_prc_data()
-    n = len(all_models_dict.keys()) + 1
+    n = len(list(all_models_dict.keys())) + 1
     colors = sns.color_palette(None, n)
     import collections
 
@@ -70,15 +70,15 @@ def plot_prc_all(ax):
         average_prc = average_precision_score(y_test, y_pred_score)
         sorted_dict[k] = average_prc
 
-    sorted_dict = sorted(sorted_dict.items(), key=lambda kv: kv[1])
+    sorted_dict = sorted(list(sorted_dict.items()), key=lambda kv: kv[1])
     sorted_dict = collections.OrderedDict(sorted_dict)
-    print 'sorted_dict', sorted_dict
+    print('sorted_dict', sorted_dict)
 
     for i, k in enumerate(sorted_dict.keys()):
         df = all_models_dict[k]
         y_test = df['y']
         y_pred_score = df['pred_scores']
-        print i, k
+        print(i, k)
         plot_prc(ax, y_test, y_pred_score, None, label=k, color=colors[i])
 
     f_scores = np.linspace(0.2, 0.8, num=4)
@@ -128,7 +128,7 @@ def plot_confusion_matrix_all(ax):
     y_t = df.y
     y_pred_test = df.pred
     cnf_matrix = confusion_matrix(y_t, y_pred_test)
-    print cnf_matrix
+    print(cnf_matrix)
 
     cm = np.array(cnf_matrix)
     classes = ['Primary', 'Metastatic']
@@ -138,11 +138,11 @@ def plot_confusion_matrix_all(ax):
                           labels,
                           normalize=True,
                           cmap=plt.cm.Reds)
-    ax.tick_params(axis=u'both', which=u'both', length=0)
+    ax.tick_params(axis='both', which='both', length=0)
 
 
 def get_predictions(filename, correct_prediction=True):
-    print filename
+    print(filename)
     df = pd.read_csv(filename, index_col=0)
     if correct_prediction:
         df.pred = df.pred_scores >= 0.5
@@ -164,14 +164,14 @@ def plot_surv(ax, filename, correct_prediction, ci_show):
     labels = ['LPS', 'HPS']
     clinical_df = get_clinical()
     df, correct, wrong = get_predictions(filename, correct_prediction)
-    print correct.shape, wrong.shape
+    print(correct.shape, wrong.shape)
     correct_full = clinical_df.merge(correct, how='inner', left_on='Patient.ID', right_index=True)
     wrong_full = clinical_df.merge(wrong, how='inner', left_on='Patient.ID', right_index=True)
 
     wrong_full = wrong_full.dropna(subset=['PFS.time', 'PFS'])
     correct_full = correct_full.dropna(subset=['PFS.time', 'PFS'])
-    print correct_full.shape
-    print wrong_full.shape
+    print(correct_full.shape)
+    print(wrong_full.shape)
 
     data = correct_full
     T1 = data['PFS.time'] / 30
@@ -191,7 +191,7 @@ def plot_surv(ax, filename, correct_prediction, ci_show):
     for x in ax.get_xticks():
         if x >= 0:
             newxticks += [x]
-        print newxticks
+        print(newxticks)
         ax.set_xticks(newxticks)
 
     # add_at_risk_counts_CUSTOM(kmf1, kmf2, ax=ax, fontsize=fontsize, labels=['LMS','HMS'])
@@ -213,7 +213,7 @@ def plot_surv(ax, filename, correct_prediction, ci_show):
     # ax.xaxis.set_label_position('top')
     # ax.xaxis.set_ticks_position('top')
 
-    ax.tick_params(axis=u'both', which=u'both', length=0)
+    ax.tick_params(axis='both', which='both', length=0)
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     # ax.spines['left'].set_visible(False)
@@ -247,7 +247,7 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
     cax = divider.append_axes('right', size='5%', pad=0.05)
     cb = fig.colorbar(im, cax=cax, orientation='vertical')
     cb.ax.tick_params(labelsize=fontsize)
-    cb.ax.tick_params(axis=u'both', which=u'both', length=0)
+    cb.ax.tick_params(axis='both', which='both', length=0)
     cb.outline.set_visible(False)
     tick_marks = np.arange(len(classes))
     if labels is None:
@@ -256,7 +256,7 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
         fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
     thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
         text = fmt.format(labels[i, j], cm[i, j])
         ax.text(j, i, text,
                 horizontalalignment="center",
@@ -333,15 +333,15 @@ def plot_pnet_vs_dense_with_ratio(ax, c, label, plot_ratio=False):
     df_dense_sameweights = get_dense_sameweights(c)
     df_pnet = get_pnet_preformance(col=c)
     pvalues = get_stats(df_pnet, df_dense_sameweights)
-    print c, zip(pvalues, sizes)
+    print(c, list(zip(pvalues, sizes)))
     plot_compaison(ax, label, df_pnet, df_dense_sameweights, sizes, linewidth)
     ax.set_ylabel(label, fontproperties, labelpad=1)
     ax.legend(['P-NET', 'Dense'], fontsize=fontsize, loc='upper left', framealpha=0)
 
     y1 = df_pnet.mean()
     y2 = df_dense_sameweights.mean()
-    height = map(max, zip(y1, y2))
-    print 'height', height
+    height = list(map(max, list(zip(y1, y2))))
+    print('height', height)
     updated_values = []
     for i, (p, s) in enumerate(zip(pvalues, sizes)):
         if p >= 0.05:
@@ -365,8 +365,8 @@ def plot_pnet_vs_dense_with_ratio(ax, c, label, plot_ratio=False):
     for tick in ax.yaxis.get_major_ticks():
         tick.label.set_fontsize(fontsize)
 
-    ax.tick_params(axis=u'x', which=u'both', length=0)
-    ax.tick_params(axis=u'y', which=u'both', length=0)
+    ax.tick_params(axis='x', which='both', length=0)
+    ax.tick_params(axis='y', which='both', length=0)
 
     if plot_ratio:
         ax2 = ax.twinx()
@@ -442,7 +442,7 @@ def plot_external_validation_matrix(ax):
     # cax = divider.append_axes('left', size='10%', pad=0.1)
     cb = fig.colorbar(im, cax=cax, orientation='vertical')
     cb.ax.tick_params(labelsize=fontsize, pad=1)
-    cb.ax.tick_params(axis=u'both', which=u'both', length=0)
+    cb.ax.tick_params(axis='both', which='both', length=0)
     cb.ax.set_ylabel('Sample percentage (%)', rotation=90, fontsize=fontsize, labelpad=1.5)
     cb.outline.set_visible(False)
     tick_marks = np.arange(len(classes))
@@ -452,7 +452,7 @@ def plot_external_validation_matrix(ax):
         fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
     thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
         text = fmt.format(labels[i, j], cm[i, j])
         ax.text(j, i, text,
                 horizontalalignment="center",

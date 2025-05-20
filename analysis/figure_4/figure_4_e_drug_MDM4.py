@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import curve_fit
 
 from config_path import PROSTATE_DATA_PATH
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def sigmoid(x, L, k, x0):
@@ -23,14 +23,14 @@ def run():
     cols = ['LNCaP'] * 6 + ['PC3'] * 6 + ['DU145'] * 6
 
     exps = ['LNCaP', 'PC3', 'DU145']
-    print exps
+    print(exps)
     colors = {'LNCaP': 'maroon', 'PC3': '#577399', 'DU145': 'orange'}
 
     X = df.index.values
     legend_labels = []
     legnds = []
     for i, exp in enumerate(exps):
-        print exp
+        print(exp)
         legend_labels.append(exp)
         df_exp = df[exp].copy()
         stdv = df_exp.std(axis=1)
@@ -50,7 +50,7 @@ def run():
     plt.ylim((-.6, 1.6))
     plt.subplots_adjust(left=0.2, bottom=0.2, right=0.8)
     plt.ylabel('Relative Viability', fontdict=dict(family='Arial', weight='bold', fontsize=14))
-    plt.xlabel(u'\u03bcM RO-5963', fontdict=dict(family='Arial', weight='bold', fontsize=14))
+    plt.xlabel('\u03bcM RO-5963', fontdict=dict(family='Arial', weight='bold', fontsize=14))
     ax.spines['bottom'].set_position(('data', 0.))
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)

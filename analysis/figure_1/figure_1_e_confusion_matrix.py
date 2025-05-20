@@ -52,7 +52,7 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
         fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
     thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
         #         text= format(labels[i,j], cm[i, j], fmt)
         text = fmt.format(labels[i, j], cm[i, j])
         ax.text(j, i, text,
@@ -71,8 +71,8 @@ def plot_confusion_matrix(ax, cm, classes, labels=None,
     ax.spines['left'].set_visible(False)
     ax.spines['bottom'].set_visible(False)
 
-    print tick_marks
-    print classes
+    print(tick_marks)
+    print(classes)
 
     ax.set_xticks(tick_marks)
     ax.set_xticklabels(classes)
@@ -109,7 +109,7 @@ def plot_confusion_matrix_all(ax):
 
     y_pred_test = df.pred
     cnf_matrix = confusion_matrix(y_t, y_pred_test)
-    print cnf_matrix
+    print(cnf_matrix)
 
     cm = np.array(cnf_matrix)
     classes = ['Primary', 'Metastatic']

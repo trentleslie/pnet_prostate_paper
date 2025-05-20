@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from config_path import PROSTATE_LOG_PATH
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def plot_(primary):
@@ -53,8 +53,8 @@ def plot_stacked(ax, filename, correct, wrong):
     xpos = [0, 2]
     width = [1.0, 1.0]
 
-    print percent1
-    print percent2
+    print(percent1)
+    print(percent2)
     bottom = [percent1[0], percent2[0]]
     top = [percent1[1], percent2[1]]
     ORANGE = (255 / 256., 127 / 256., 0, 1.0)
@@ -102,7 +102,7 @@ def plot_stacked(ax, filename, correct, wrong):
     table_props = table.properties()
     table_cells = table_props['child_artists']
     for i, cell in enumerate(table_cells):
-        print i
+        print(i)
         if i in [6]:
             cell.get_text().set_fontsize(20)
             cell.get_text().set_color('w')
@@ -154,7 +154,7 @@ def plot_external_validation_matrix(ax):
         fmt = '{}: {:.2f}%' if normalize else '{}: {:d}'
 
     thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    for i, j in itertools.product(list(range(cm.shape[0])), list(range(cm.shape[1]))):
         text = fmt.format(labels[i, j], cm[i, j])
         ax.text(j, i, text,
                 horizontalalignment="center",

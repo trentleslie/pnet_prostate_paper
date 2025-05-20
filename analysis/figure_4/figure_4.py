@@ -43,7 +43,7 @@ def plot_screen(ax):
     ax1 = divider.append_axes('top', size='10%', pad=0.1)
     ax3 = divider.append_axes('bottom', size='10%', pad=0.1)
 
-    x = range(df.shape[0])
+    x = list(range(df.shape[0]))
 
     ax1.plot(x, df['Z-LFC AVERAGE Enzalutimide'], '.', markersize=0.5)
     ax2.plot(x, df['Z-LFC AVERAGE Enzalutimide'], '.', markersize=0.5)
@@ -96,14 +96,14 @@ def plot_screen(ax):
     direction = [-1, 1] * 5
     x = [0, 30, -30, 0, ]
     y = [0, -2, +4, 0]
-    print direction
+    print(direction)
     for i, gene in enumerate(interesting):
         if gene in df.index:
-            print gene
+            print(gene)
             ind = df.index.str.contains(gene)
             x = list(ind).index(True)
             y = df['Z-LFC AVERAGE Enzalutimide'][x]
-            print gene, x, y
+            print(gene, x, y)
             # ax2.plot(x, y, 'r*')
             # ax2.text(x+170, y, gene, fontdict=dict( fontsize=8))
             xytext = (direction[i] * 30, -2)
@@ -132,7 +132,7 @@ def plot_stacked_hist_cnv(gene_name, ax):
     df['y'] = y
 
     ind = np.sort(df[gene_name].unique())
-    print ind
+    print(ind)
     primary_df = df[df['y'] == 0]
     mets_df = df[df['y'] == 1]
     p = primary_df[gene_name].value_counts()
@@ -152,7 +152,7 @@ def plot_stacked_hist_cnv(gene_name, ax):
 
     color = [D_id_color[i] for i in summary.index]
 
-    print summary
+    print(summary)
     # bars = summary.T.plot.bar(stacked=True, ax=ax, color=color, width=0.25)
     # labels = summary.index
     # ax.bar(labels, men_means, 0.5,  label=labels[0],)
@@ -160,13 +160,13 @@ def plot_stacked_hist_cnv(gene_name, ax):
     # fig, ax = plt.subplots()
     labels = summary.index
     bottoms = summary.cumsum()
-    print bottoms
+    print(bottoms)
     x = [0.25, 0.75]
     for i, l in enumerate(labels):
-        print l
+        print(l)
         bottom = bottoms.loc[l, :] - summary.loc[l, :]
         ax.bar(x, summary.loc[l, :].values, label=l, color=D_id_color[l], width=0.3, bottom=bottom)
-    print summary.columns
+    print(summary.columns)
     ax.set_xticks(x)
     ax.set_xticklabels(list(summary.columns))
     ax.tick_params(axis='x', rotation=0, labelsize=fontsize)
@@ -202,7 +202,7 @@ def plot_crispr(ax):
     y = "Normalized Viable cells"
     group = 'Sample ID'
     order = sorted(list(normalized_df[x].unique()))
-    print order
+    print(order)
     # Draw the bar chart
     ax = sns.barplot(
         data=normalized_df,
@@ -280,12 +280,12 @@ def plot_4d(ax):
         x = np.arange(len(u))
         subx = df[subcat].unique()
         offsets = (np.arange(len(subx)) - np.arange(len(subx)).mean()) / (len(subx) + 1.)
-        print df.shape
-        print x
-        print offsets
+        print(df.shape)
+        print(x)
+        print(offsets)
         width = np.diff(offsets).mean()
         for i, gr in enumerate(subx):
-            print gr
+            print(gr)
             dfg = df[df[subcat] == gr]
             ax.bar(x + offsets[i], dfg[val].values, width=width,
                    label="{}".format(gr), yerr=dfg[err].values, capsize=1.5, color=colors[gr], alpha=0.7,
@@ -295,8 +295,8 @@ def plot_4d(ax):
             yval = dfg[val].values
             xval = [x[i] + offsets[i]]
             xval = np.random.normal(xval, 0.04, len(yval))
-            print yval
-            print xval
+            print(yval)
+            print(xval)
             # xval = np.random.normal(xval, 0.04, len(yval))
             ax.scatter(xval, yval, marker='.', color='black', s=1.)
 
@@ -315,8 +315,8 @@ def plot_4d(ax):
     subcat = "Sample ID"
     val = "Normalized Cell Count"
     err = "std"
-    print normalized_df.shape
-    print normalized_df.reset_index().columns
+    print(normalized_df.shape)
+    print(normalized_df.reset_index().columns)
     grouped_barplot(normalized_df.reset_index(), cat, subcat, val, err)
     # subx = df[subcat].unique()
     # for i, gr in enumerate(subx):
@@ -359,20 +359,20 @@ def plot_crispr_sem(ax):
         offsets = (np.arange(len(subcats)) - np.arange(len(subcats)).mean()) / (len(subcats) + 1.)
         width = np.diff(offsets).mean()
 
-        print  'offsets', offsets
-        print  'offsets', x
+        print('offsets', offsets)
+        print('offsets', x)
         xval_list = []
         for i, c in enumerate(cats):
             for j, s in enumerate(subcats):
                 xval_list.append({'cat': c, 'subcat': s, 'xval': x[i] + offsets[j]})
 
         jetter = np.random.uniform(low=-0.05, high=0.05, size=(len(xval_list)))
-        print jetter
+        print(jetter)
         xval_df = pd.DataFrame(xval_list).set_index(['cat', 'subcat'])
         xval_df.xval = xval_df.xval + jetter
-        print xval_df
+        print(xval_df)
         df = df.join(xval_df, on=[cat_col, subcat_col], how='inner')
-        print df.head()
+        print(df.head())
         for i, gr in enumerate(subcats):
             inds = df[subcat_col] == gr
             group_df = df.loc[inds, :]
@@ -393,8 +393,8 @@ def plot_crispr_sem(ax):
     cat = "Cell line"
     subcat = "Sample ID"
     val = "Normalized Cell Count"
-    print normalized_df.shape
-    print normalized_df.reset_index().columns
+    print(normalized_df.shape)
+    print(normalized_df.reset_index().columns)
     grouped_barplot(normalized_df, cat, subcat, val)
 
     ax.set_yticks([0, 0.5, 1.0])

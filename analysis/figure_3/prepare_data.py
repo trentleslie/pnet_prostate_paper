@@ -44,9 +44,9 @@ def save_link_weights(link_weights_df, layers):
 
 
 def save_activation(layer_outs_dict, feature_names, info):
-    for l_name, l_outut in sorted(layer_outs_dict.iteritems()):
+    for l_name, l_outut in sorted(layer_outs_dict.items()):
         if l_name.startswith('h'):
-            print l_name, l_outut.shape
+            print(l_name, l_outut.shape)
             l = int(l_name[1:])
             features = feature_names[l_name]
             layer_output_df = pd.DataFrame(l_outut, index=info, columns=features)
@@ -67,7 +67,7 @@ def save_graph_stats(degrees, fan_outs, fan_ins, layers):
     for i, (d, fin, fout) in enumerate(zip(degrees[1:], fan_ins, fan_outs[1:])):
         df = pd.concat([d, fin, fout], axis=1)
         df.columns = ['degree', 'fan_in', 'fan_out']
-        print df.head()
+        print(df.head())
         filename = join(saving_dir, 'graph_stats_{}.csv'.format(i + 2))
         df.to_csv(filename)
 
@@ -93,36 +93,36 @@ def run():
     feature_names = nn_model.feature_names
     X, Y, info = get_data(loader, use_data, dropAR)
     response = pd.DataFrame(Y, index=info, columns=['response'])
-    print response.head()
+    print(response.head())
     filename = join(saving_dir, 'response.csv')
     response.to_csv(filename)
     #
-    print 'saving gradeint importance'
+    print('saving gradeint importance')
     # #gradeint importance --------------------
     node_weights_, node_weights_samples_dfs = get_node_importance(nn_model, X, Y, importance_type[0], target)
     save_gradient_importance(node_weights_, node_weights_samples_dfs, info)
     #
-    print 'saving link weights'
+    print('saving link weights')
     # # link weights --------------------
     link_weights_df = get_link_weights_df_(nn_model.model, feature_names, layers)
     save_link_weights(link_weights_df, layers[1:])
     #
-    print 'saving activation'
+    print('saving activation')
     # # activation --------------------
     layer_outs_dict = nn_model.get_layer_outputs(X)
     save_activation(layer_outs_dict, feature_names, info)
     #
-    print 'saving graph stats'
+    print('saving graph stats')
     # # graph stats --------------------
     stats = get_degrees(link_weights_df, layers[1:])
     import numpy as np
-    keys = np.sort(stats.keys())
+    keys = np.sort(list(stats.keys()))
     for k in keys:
         filename = join(saving_dir, 'graph_stats_{}.csv'.format(k))
         stats[k].to_csv(filename)
     # save_graph_stats(degrees,fan_outs, fan_ins)
     #
-    print 'adjust weights with graph stats'
+    print('adjust weights with graph stats')
     # # graph stats --------------------
     degrees = []
     for k in keys:

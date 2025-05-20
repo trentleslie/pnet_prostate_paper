@@ -13,14 +13,14 @@ base_dir = DATA_PATH
 filename = 'prostate_paper/processed/P1000_final_analysis_set_cross_important_only.csv'
 
 df = pd.read_csv(join(base_dir, filename), sep='\t')
-print df.columns
+print(df.columns)
 
 df['type'] = df['Sample Type'] == 'Metastasis'
-print df.head()
+print(df.head())
 
 df = pd.read_csv(join(base_dir, filename), sep='\t')
 df['type'] = df['Sample Type'] == 'Metastasis'
-print df.head()
+print(df.head())
 
 df['Mutation Count'] = df['Mutation Count'].fillna(0)
 

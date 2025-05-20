@@ -8,7 +8,7 @@ from matplotlib import gridspec
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from analysis.data_extraction_utils import get_pathway_names
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def plot_jitter(group_col, val_col, data, ax):
@@ -16,7 +16,7 @@ def plot_jitter(group_col, val_col, data, ax):
     sums = vals.sum().to_frame().sort_values(val_col, ascending=True)
     inds = np.arange(1, len(sums) + 1)
     for i, s in zip(inds, sums.index):
-        print i, s
+        print(i, s)
         ind = data[group_col] == s
         n = sum(ind)
         x = data.loc[ind, val_col]
@@ -148,7 +148,7 @@ def plot_high_genes2(ax, layer=1, graph='hist', direction='h'):
         ax2.spines['right'].set_visible(False)
         # ax2.spines['bottom'].set_visible(False)
         ax2.spines['left'].set_visible(False)
-        ax2.tick_params(axis=u'both', which=u'both', length=0)
+        ax2.tick_params(axis='both', which='both', length=0)
 
 
 def plot_activation(ax, column='coef_combined', layer=3, pad=200, current_dir=''):
@@ -203,7 +203,7 @@ def plot_activation(ax, column='coef_combined', layer=3, pad=200, current_dir=''
     ax.xaxis.set_tick_params(labelsize=ticksize)
     ax.yaxis.set_tick_params(labelsize=ticksize)
 
-    ax.tick_params(axis=u'both', which=u'both', length=0)
+    ax.tick_params(axis='both', which='both', length=0)
 
 
 fontproperties = dict(family='Arial', weight='normal', fontsize=6)

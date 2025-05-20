@@ -1,9 +1,9 @@
 from matplotlib import pyplot as plt
 
-from figure_1 import figure_1, figure_1_d_auc_prc, figure_1_e_confusion_matrix
-from figure_2 import figure_2, figure_2_a_pnet_vs_dense, figure_2_b_external_validation, figure_2_c_survival
-from figure_3 import prepare_data, figure_3_sankey, figure3_b_gene_importance, figure3_c_activation
-from figure_4 import figure_4, figure_4_a, figure_4_d, figure_4_e_drug_MDM4, MDM4_TP53
+from .figure_1 import figure_1, figure_1_d_auc_prc, figure_1_e_confusion_matrix
+from .figure_2 import figure_2, figure_2_a_pnet_vs_dense, figure_2_b_external_validation, figure_2_c_survival
+from .figure_3 import prepare_data, figure_3_sankey, figure3_b_gene_importance, figure3_c_activation
+from .figure_4 import figure_4, figure_4_a, figure_4_d, figure_4_e_drug_MDM4, MDM4_TP53
 
 # Figure 1
 figure_1_d_auc_prc.run_auc()
@@ -54,7 +54,7 @@ plt.clf()
 # plt.clf()
 
 ## extended_figures
-from extended_figures import figure_ed2_computational_performance, figure_ed3_pnet_vs_dense, figure_ed4_fusion, \
+from .extended_figures import figure_ed2_computational_performance, figure_ed3_pnet_vs_dense, figure_ed4_fusion, \
     figure_ed5_cnv, figure_ed5_importance, figure_ed7_activation
 
 figure_ed2_computational_performance.run()

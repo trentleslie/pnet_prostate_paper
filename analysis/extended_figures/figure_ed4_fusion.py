@@ -32,21 +32,21 @@ def sort_dict(all_models_dict):
         fpr, tpr, thresholds = metrics.roc_curve(y_test, y_pred_score, pos_label=1)
         average_auc = metrics.auc(fpr, tpr)
         sorted_dict[k] = average_auc
-        print('model {} , auc= {}'.format(k, average_auc))
+        print(('model {} , auc= {}'.format(k, average_auc)))
 
-    sorted_dict = sorted(sorted_dict.items(), key=lambda kv: kv[1], reverse=True)
+    sorted_dict = sorted(list(sorted_dict.items()), key=lambda kv: kv[1], reverse=True)
     sorted_dict = collections.OrderedDict(sorted_dict)
     return sorted_dict
 
 
 def plot_auc_all(all_models_dict, ax):
     # sort based on area under prc
-    n = len(all_models_dict.keys())
+    n = len(list(all_models_dict.keys()))
     colors = sns.color_palette(None, n)
 
     sorted_dict = sort_dict(all_models_dict)
     for i, k in enumerate(sorted_dict.keys()):
-        print('model {} , auc= {}'.format(k, sorted_dict[k]))
+        print(('model {} , auc= {}'.format(k, sorted_dict[k])))
         df = all_models_dict[k]
         y_test = df['y']
         y_pred_score = df['pred_scores']
@@ -54,7 +54,7 @@ def plot_auc_all(all_models_dict, ax):
 
 
 def plot_auc_bootstrap(all_models_dict, ax):
-    n = len(all_models_dict.keys())
+    n = len(list(all_models_dict.keys()))
     colors = sns.color_palette(None, n)
 
     all_scores = []
@@ -103,8 +103,8 @@ def read_predictions(dirs_df):
         dir_ = join(base_dir, dir_)
         prediction_file = join(dir_, 'P-net_ALL_testing.csv')
         pred_df = pd.read_csv(prediction_file)
-        print(pred_df.shape)
-        print(pred_df.head())
+        print((pred_df.shape))
+        print((pred_df.head()))
         model_dict[model] = pred_df
     return model_dict
 
@@ -153,7 +153,7 @@ def plot_contributions(ax):
     plot_df.fillna(0, inplace=True)
     color = [D_id_color[i] for i in plot_df.index]
 
-    print plot_df
+    print(plot_df)
     plot_df.T.plot.bar(stacked=True, color=color, rot=0, ax=ax)
     # ax.legend(fontsize=fontsize, bbox_to_anchor=(.7, -0.1), framealpha=0)
     ax.legend(framealpha=0.0, bbox_to_anchor=(.5, 1.2), loc='upper center', ncol=2, prop={'size': fontsize})
@@ -271,7 +271,7 @@ def plot_fusion_indicator_ranking(ax, dirs_df):
 
     col = 'coef_abs'
     importance = coef_df.sort_values(col, ascending=False)
-    importance['rank'] = range(1, len(importance) + 1)
+    importance['rank'] = list(range(1, len(importance) + 1))
     importance_log = np.log(importance[col].values + 1)
 
     ax.plot(importance_log, ".", linewidth=1.)
@@ -317,7 +317,7 @@ def compare_auc_cnv_def(ax):
     files.append(dict(Model='two copies', file=join(base_dir_two_copies, 'onsplit_average_reg_10_tanh_large_testing')))
     dirs_df = pd.DataFrame(files)
 
-    print dirs_df
+    print(dirs_df)
     model_dict = read_predictions(dirs_df)
 
     plot_auc_all(model_dict, ax)
@@ -358,7 +358,7 @@ def plot_stability(ax):
         for f in n_features:
             stability_index = get_stability_index(df, f)
             stability_indeces.append(stability_index)
-            print f, stability_index
+            print(f, stability_index)
 
         ax.plot(n_features, stability_indeces, '*-', linewidth=0.5)
         ax.set_ylabel('stability index', fontsize=fontsize)
@@ -375,7 +375,7 @@ def plot_stability(ax):
     models = ['single copy', 'two copies']
 
     for m in files:
-        print m
+        print(m)
         plot_stability_(ax, m, n_features)
     ax.legend([m.replace('.csv', '') for m in models], fontsize=fontsize)
     ax.set_xlabel('Number of top features', fontproperties)

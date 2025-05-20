@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from upsetplot import from_memberships
 from upsetplot import plot
 
-from setup import saving_dir
+from .setup import saving_dir
 
 
 def run():

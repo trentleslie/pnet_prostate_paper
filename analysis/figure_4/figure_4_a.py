@@ -7,7 +7,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 from data.data_access import Data
-from setup import saving_dir
+from .setup import saving_dir
 
 data_params = {'id': 'cnv', 'type': 'prostate_paper', 'params': {'data_type': 'cnv', 'drop_AR': False}}
 data = Data(**data_params)
@@ -80,7 +80,7 @@ def plot_hist_cnv(df, gene_name, ax):
 
 def plot_stacked_hist_cnv(df, gene_name, ax):
     ind = np.sort(df[gene_name].unique())
-    print ind
+    print(ind)
     primary_df = df[df['y'] == 0]
     mets_df = df[df['y'] == 1]
     p = primary_df[gene_name].value_counts()
@@ -116,7 +116,7 @@ def plot_stacked_hist_cnv(df, gene_name, ax):
 
 def plot_stacked_hist_mut(df, gene_name, ax):
     ind = np.sort(df[gene_name].unique())
-    print ind
+    print(ind)
     primary_df = df[df['y'] == 0]
     mets_df = df[df['y'] == 1]
     p = primary_df[gene_name].value_counts()

@@ -10,12 +10,12 @@ def run():
 
     params_count = []
     for n1, n2 in zip(nodes, nodes[1:]):
-        print n1, n2
+        print(n1, n2)
         params_count.append(n1 * n2)
 
-    print (sum(params_count))
-    print (sum(nodes))
-    print (27687 * 9229)
+    print((sum(params_count)))
+    print((sum(nodes)))
+    print((27687 * 9229))
 
 
 if __name__ == "__main__":
