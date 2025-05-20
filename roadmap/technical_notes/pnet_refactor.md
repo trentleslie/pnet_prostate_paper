@@ -52,9 +52,23 @@ Our approach to this modernization is phased to manage complexity and ensure ste
     *   **Missing Parameter Files (`_params.yml`):** Developing and implementing a strategy to handle the missing model configuration files. This may involve recovering them if possible, or creating mock/template files and a minimal test model setup to enable pipeline testing. *Initial planning documents (`FP002`) have been created.*
 
 *   **Phase 4: Integration, Comprehensive Testing & Validation (Future)**
-    *   Conducting end-to-end testing of the complete model training, prediction, and evaluation pipelines.
-    *   Developing new automated tests as needed to ensure correctness and prevent regressions.
-    *   Where possible, validating the behavior and outputs of the refactored models against results from the original P-NET system.
+    *   **Prerequisites:**
+        *   Secure access to the datasets used in the original publication (e.g., Armenia et al. cohort, external validation cohorts referenced in Elmarakeby et al., Nature 2021). Refer to the paper's "Data availability" section and supplementary materials.
+        *   Successfully resolve the missing `_params.yml` files (as per roadmap item `FP002`) to reconstruct original model configurations or establish well-justified new configurations based on paper descriptions.
+    *   **Core Model Performance Replication:**
+        *   Conduct end-to-end testing of the model's ability to predict disease state (primary vs. metastatic CRPC) using the main dataset.
+        *   Aim to replicate reported performance metrics (AUC, AUPRC, Accuracy, F1) using the paper's 80%/10%/10% train/validation/test splits and/or 5-fold cross-validation methodology.
+        *   Compare the refactored P-NET performance against baselines similar to those used in the paper (e.g., Logistic Regression, SVM, a simple dense neural network).
+    *   **External Validation:**
+        *   If external validation datasets (as mentioned in the paper) are accessible, test the trained model on these to assess generalizability, comparing against reported classification accuracies.
+    *   **Specific Analyses from the Paper to Consider for Replication:**
+        *   **Biochemical Recurrence (BCR) Prediction:** If clinical outcome data linked to the patient samples is available, attempt to replicate the analysis correlating P-NET scores in primary tumors with BCR (referencing Fig. 2d in the paper).
+        *   **Interpretability and Feature Importance:**
+            *   Implement or integrate an attribution method compatible with TensorFlow 2.x (e.g., variants of DeepLIFT, SHAP, or Integrated Gradients) to analyze feature, gene, and pathway importance.
+            *   Compare the highly-ranked features identified by the refactored model with those highlighted in the paper (e.g., AR, PTEN, TP53, MDM4, FGFR1).
+    *   **Benchmarking and Regression Testing:**
+        *   Develop new automated tests specific to the refactored codebase to ensure correctness and prevent regressions during ongoing development.
+    *   **Note on Functional Validations:** The original paper includes extensive in vitro functional validations (e.g., CRISPR screens for MDM4). While these are typically beyond the scope of a codebase refactoring project, they provide crucial biological context for the model's findings and can inform potential downstream research directions leveraging the modernized P-NET.
 
 *   **Phase 5: Documentation & Finalization (Future)**
     *   Updating all relevant technical documentation, including model descriptions and usage guides.
