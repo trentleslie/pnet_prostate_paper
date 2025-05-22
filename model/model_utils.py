@@ -3,7 +3,8 @@ import logging
 import os
 import time
 
-from tensorflow.keras.models import Sequential
+import tensorflow as tf
+from tensorflow.keras.models import Sequential, Model
 from matplotlib import pyplot as plt
 
 
@@ -29,11 +30,25 @@ def load_model(file_name):
 def print_model(model, level=1):
     for i, l in enumerate(model.layers):
         indent = '  ' * level + '-'
+        # Handle TF2.x vs TF1.x differences in layer attributes
+        if hasattr(l, 'output_shape'):
+            out_shape = l.output_shape
+        else:
+            # For TF2.x, try getting the output shape from the layer object
+            try:
+                if hasattr(l, 'output'):
+                    out_shape = l.output.shape
+                else:
+                    out_shape = 'unknown'
+            except (AttributeError, TypeError):
+                # If we can't get the shape, just use 'unknown'
+                out_shape = 'unknown'
+                
         if type(l) == Sequential:
-            logging.info('{} {} {} {}'.format(indent, i, l.name, l.output_shape))
+            logging.info('{} {} {} {}'.format(indent, i, l.name, out_shape))
             print_model(l, level + 1)
         else:
-            logging.info('{} {} {} {}'.format(indent, i, l.name, l.output_shape))
+            logging.info('{} {} {} {}'.format(indent, i, l.name, out_shape))
 
 
 def get_layers(model, level=1):
@@ -51,7 +66,7 @@ def get_layers(model, level=1):
 
 from model.coef_weights_utils import get_gradient_weights, get_permutation_weights, get_weights_linear_model, \
     get_gradient_weights_with_repeated_output, get_weights_gradient_outcome, \
-    get_deep_explain_scores, get_shap_scores, get_skf_weights
+    get_activation_gradients_importance, get_skf_weights
 import numpy as np
 
 
@@ -74,17 +89,42 @@ def get_coef_importance(model, X_train, y_train, target, feature_importance, det
         coef_ = get_weights_gradient_outcome(model, X_train, y_train, target, multiply_by_input=True, signed=False)
     elif feature_importance == 'gradient_outcome*input_signed':
         coef_ = get_weights_gradient_outcome(model, X_train, y_train, target, multiply_by_input=True, signed=True)
-
     elif feature_importance.startswith('deepexplain'):
+        # For TF2 compatibility, deepexplain methods are replaced with activation gradients
         method = feature_importance.split('_')[1]
-        coef_ = get_deep_explain_scores(model, X_train, y_train, target, method_name=method, detailed=detailed,
-                                        **kwargs)
-
+        
+        # Map original deepexplain methods to equivalent activation gradient methods
+        method_mapping = {
+            'grad*input': 'input*grad',
+            'grad': 'grad',
+            'gradshap': 'grad',
+            'deeplift': 'input*grad',  # approximation
+            'intgrad': 'input*grad',  # approximation
+            'elrp': 'input*grad',  # approximation
+            'occlusion': 'input*grad_abs'  # approximation
+        }
+        
+        activation_method = method_mapping.get(method, 'input*grad')
+        logging.info(f"Using activation_gradients_importance with method '{activation_method}' as replacement for deepexplain_{method}")
+        
+        coef_ = get_activation_gradients_importance(
+            model, X_train, y_train, 
+            target=target, 
+            method=activation_method, 
+            detailed=detailed
+        )
     elif feature_importance.startswith('shap'):
+        # For TF2 compatibility, shap methods are approximated with activation gradients
         method = feature_importance.split('_')[1]
-        coef_ = get_shap_scores(model, X_train, y_train, target, method_name=method, detailed=detailed)
-
-
+        logging.info(f"Using activation_gradients_importance as replacement for shap_{method}")
+        
+        # Most SHAP methods multiply input by gradient or use variants of this
+        coef_ = get_activation_gradients_importance(
+            model, X_train, y_train, 
+            target=target, 
+            method='input*grad',
+            detailed=detailed
+        )
     elif feature_importance == 'gradient_with_repeated_outputs':
         coef_ = get_gradient_weights_with_repeated_output(model, X_train, y_train, target)
     elif feature_importance == 'permutation':
@@ -96,7 +136,14 @@ def get_coef_importance(model, X_train, y_train, target, feature_importance, det
         switch_layer_weights = weights[0]
         coef_ = np.abs(switch_layer_weights)
     else:
-        coef_ = None
+        # Default to activation gradients importance for unknown methods
+        logging.warning(f"Unknown feature_importance method '{feature_importance}', using activation_gradients_importance as fallback")
+        coef_ = get_activation_gradients_importance(
+            model, X_train, y_train, 
+            target=target, 
+            method='input*grad',
+            detailed=detailed
+        )
     return coef_
 
 

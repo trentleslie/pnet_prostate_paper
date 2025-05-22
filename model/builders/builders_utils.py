@@ -4,29 +4,35 @@ import logging
 
 import numpy as np
 import pandas as pd
-from keras.layers import Dense, Dropout, Activation, BatchNormalization, multiply
-from keras.regularizers import l2
+from tensorflow.keras.layers import Dense, Dropout, Activation, BatchNormalization, multiply
+from tensorflow.keras.regularizers import l2
 
 # from data.pathways.pathway_loader import get_pathway_files
 from data.pathways.reactome import ReactomeNetwork
-from model.layers_custom import Diagonal, SparseTF
+# Import TF2.x versions of custom layers
+try:
+    from model.layers_custom_tf2 import Diagonal, SparseTF
+except ImportError:
+    # Fall back to the original versions if TF2.x versions aren't available
+    from model.layers_custom import Diagonal, SparseTF
 
 
 def get_map_from_layer(layer_dict):
-    pathways = layer_dict.keys()
-    print 'pathways', len(pathways)
+    pathways = list(layer_dict.keys()) # Ensure pathways is a list for pathways.index(p)
+    print(f'pathways: {len(pathways)}')
     genes = list(itertools.chain.from_iterable(layer_dict.values()))
     genes = list(np.unique(genes))
-    print 'genes', len(genes)
+    print(f'genes: {len(genes)}')
 
     n_pathways = len(pathways)
     n_genes = len(genes)
 
     mat = np.zeros((n_pathways, n_genes))
     for p, gs in layer_dict.items():
-        g_inds = [genes.index(g) for g in gs]
+        g_inds = [genes.index(g) for g in gs if g in genes] # Added check if g in genes
         p_ind = pathways.index(p)
-        mat[p_ind, g_inds] = 1
+        if g_inds: # Ensure g_inds is not empty before assignment
+            mat[p_ind, g_inds] = 1
 
     df = pd.DataFrame(mat, index=pathways, columns=genes)
     # for k, v in layer_dict.items():
@@ -41,28 +47,28 @@ def get_layer_maps(genes, n_levels, direction, add_unk_genes):
     filtering_index = genes
     maps = []
     for i, layer in enumerate(reactome_layers[::-1]):
-        print 'layer #', i
+        print(f'layer #: {i}') # Lint fix ID: dd257e51-cbee-4e92-a65c-2ae70dcd3831
         mapp = get_map_from_layer(layer)
         filter_df = pd.DataFrame(index=filtering_index)
-        print 'filtered_map', filter_df.shape
+        print(f'filtered_map (filter_df) shape before merge: {filter_df.shape}')
         filtered_map = filter_df.merge(mapp, right_index=True, left_index=True, how='left')
         # filtered_map = filter_df.merge(mapp, right_index=True, left_index=True, how='inner')
-        print 'filtered_map', filter_df.shape
+        print(f'filtered_map shape after merge: {filtered_map.shape}')
         # filtered_map = filter_df.merge(mapp, right_index=True, left_index=True, how='inner')
 
         # UNK, add a node for genes without known reactome annotation
         if add_unk_genes:
-            print('UNK ')
+            print("UNK ") # Standardized print
             filtered_map['UNK'] = 0
             ind = filtered_map.sum(axis=1) == 0
             filtered_map.loc[ind, 'UNK'] = 1
         ####
 
         filtered_map = filtered_map.fillna(0)
-        print 'filtered_map', filter_df.shape
+        print(f'filtered_map shape after fillna: {filtered_map.shape}')
         # filtering_index = list(filtered_map.columns)
         filtering_index = filtered_map.columns
-        logging.info('layer {} , # of edges  {}'.format(i, filtered_map.sum().sum()))
+        logging.info('layer {} , # of edges  {}'.format(i, filtered_map.sum().sum())) # This logging is already Py3
         maps.append(filtered_map)
     return maps
 
@@ -87,158 +93,238 @@ def shuffle_genes_map(mapp):
 def get_pnet(inputs, features, genes, n_hidden_layers, direction, activation, activation_decision, w_reg,
              w_reg_outcomes, dropout, sparse, add_unk_genes, batch_normal, kernel_initializer, use_bias=False,
              shuffle_genes=False, attention=False, dropout_testing=False, non_neg=False, sparse_first_layer=True):
+    """
+    Create a Pathway Network (P-NET) model using TensorFlow 2.x Keras.
+    
+    Args:
+        inputs: Input tensor
+        features: Features used in the model
+        genes: Gene list
+        n_hidden_layers: Number of hidden layers
+        direction: Direction of pathway connections
+        activation: Activation function
+        activation_decision: Activation function for decision layers
+        w_reg: Weight regularization factor
+        w_reg_outcomes: Weight regularization for outcomes
+        dropout: Dropout rate
+        sparse: Whether to use sparse layers
+        add_unk_genes: Whether to add unknown genes
+        batch_normal: Whether to use batch normalization
+        kernel_initializer: Initializer for weights
+        use_bias: Whether to use bias
+        shuffle_genes: Whether to shuffle gene connections
+        attention: Whether to use attention mechanism
+        dropout_testing: Whether to apply dropout during testing
+        non_neg: Whether to enforce non-negative constraints
+        sparse_first_layer: Whether to use sparse first layer
+        
+    Returns:
+        outcome: Output tensor
+        decision_outcomes: List of decision outputs
+        feature_names: Dictionary of feature names
+    """
+    # Import at function level for clarity
+    from tensorflow.keras.constraints import NonNeg
+    
+    # Initialize data structures
     feature_names = {}
     n_features = len(features)
     n_genes = len(genes)
-
-    if not type(w_reg) == list:
+    
+    # Ensure configuration parameters are in list format
+    if not isinstance(w_reg, list):
         w_reg = [w_reg] * 10
 
-    if not type(w_reg_outcomes) == list:
+    if not isinstance(w_reg_outcomes, list):
         w_reg_outcomes = [w_reg_outcomes] * 10
 
-    if not type(dropout) == list:
-        dropout = [w_reg_outcomes] * 10
+    if not isinstance(dropout, list):
+        # Fixed bug from original: use dropout values instead of w_reg_outcomes
+        dropout = [dropout] * 10 
 
+    # Extract configuration for first layer
     w_reg0 = w_reg[0]
     w_reg_outcome0 = w_reg_outcomes[0]
     w_reg_outcome1 = w_reg_outcomes[1]
+    
+    # Regularization and constraints
     reg_l = l2
     constraints = {}
     if non_neg:
-        from keras.constraints import nonneg
-        constraints = {'kernel_constraint': nonneg()}
-        # constraints= {'kernel_constraint': nonneg(), 'bias_constraint':nonneg() }
+        constraints = {'kernel_constraint': NonNeg()}
+
+    # First layer definition - different options based on configuration
     if sparse:
         if shuffle_genes == 'all':
+            # Create random connectivity matrix
             ones_ratio = float(n_features) / np.prod([n_genes, n_features])
-            logging.info('ones_ratio random {}'.format(ones_ratio))
+            logging.info(f'ones_ratio random {ones_ratio}')
             mapp = np.random.choice([0, 1], size=[n_features, n_genes], p=[1 - ones_ratio, ones_ratio])
-            layer1 = SparseTF(n_genes, mapp, activation=activation, W_regularizer=reg_l(w_reg0),
-                              name='h{}'.format(0), kernel_initializer=kernel_initializer, use_bias=use_bias,
+            
+            # Create SparseTF layer with TF2.x parameter names
+            layer1 = SparseTF(n_genes, mapp, activation=activation, 
+                              kernel_regularizer=reg_l(w_reg0),  # Updated from W_regularizer
+                              name='h0', 
+                              kernel_initializer=kernel_initializer, 
+                              use_bias=use_bias,
                               **constraints)
-            # layer1 = Diagonal(n_genes, input_shape=(n_features,), activation=activation, W_regularizer=l2(w_reg),
-            #           use_bias=use_bias, name='h0', kernel_initializer= kernel_initializer )
         else:
-            layer1 = Diagonal(n_genes, input_shape=(n_features,), activation=activation, W_regularizer=l2(w_reg0),
-                              use_bias=use_bias, name='h0', kernel_initializer=kernel_initializer, **constraints)
-
-
+            # Create Diagonal layer with TF2.x parameter names
+            layer1 = Diagonal(n_genes, 
+                              input_shape=(n_features,), 
+                              activation=activation, 
+                              kernel_regularizer=l2(w_reg0),  # Updated from W_regularizer
+                              use_bias=use_bias, 
+                              name='h0', 
+                              kernel_initializer=kernel_initializer, 
+                              **constraints)
     else:
         if sparse_first_layer:
-            #
-            layer1 = Diagonal(n_genes, input_shape=(n_features,), activation=activation, W_regularizer=l2(w_reg0),
-                              use_bias=use_bias, name='h0', kernel_initializer=kernel_initializer, **constraints)
+            # Create Diagonal layer with TF2.x parameter names
+            layer1 = Diagonal(n_genes, 
+                              input_shape=(n_features,), 
+                              activation=activation, 
+                              kernel_regularizer=l2(w_reg0),  # Updated from W_regularizer
+                              use_bias=use_bias, 
+                              name='h0', 
+                              kernel_initializer=kernel_initializer, 
+                              **constraints)
         else:
-            layer1 = Dense(n_genes, input_shape=(n_features,), activation=activation, W_regularizer=l2(w_reg0),
-                           use_bias=use_bias, name='h0', kernel_initializer=kernel_initializer)
+            # Create Dense layer with TF2.x parameter names
+            layer1 = Dense(n_genes, 
+                           input_shape=(n_features,), 
+                           activation=activation, 
+                           kernel_regularizer=l2(w_reg0),  # Updated from W_regularizer
+                           use_bias=use_bias, 
+                           name='h0', 
+                           kernel_initializer=kernel_initializer)
+    
+    # Apply first layer
     outcome = layer1(inputs)
+    
+    # Add attention mechanism if requested
     if attention:
-        attention_probs = Diagonal(n_genes, input_shape=(n_features,), activation='sigmoid', W_regularizer=l2(w_reg0),
+        attention_probs = Diagonal(n_genes, 
+                                   input_shape=(n_features,), 
+                                   activation='sigmoid', 
+                                   kernel_regularizer=l2(w_reg0),  # Updated from W_regularizer
                                    name='attention0')(inputs)
+        # Updated multiply operation with TF2.x API
         outcome = multiply([outcome, attention_probs], name='attention_mul')
 
+    # Initialize decision outcomes list
     decision_outcomes = []
+    
+    # Create first decision output directly from inputs
+    decision_outcome = Dense(1, 
+                            activation='linear', 
+                            name='o_linear0', 
+                            kernel_regularizer=reg_l(w_reg_outcome0))(inputs)  # Updated from W_regularizer
 
-    # if reg_outcomes:
-    # decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(0), W_regularizer=reg_l(w_reg_outcome0), **constraints)(inputs)
-    decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(0), W_regularizer=reg_l(w_reg_outcome0))(
-        inputs)
-    # else:
-    #     decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(0))(inputs)
-
-    # testing
+    # Apply batch normalization if requested
     if batch_normal:
         decision_outcome = BatchNormalization()(decision_outcome)
-
-    # decision_outcome = Activation( activation=activation_decision, name='o{}'.format(0))(decision_outcome)
-
-    # first outcome layer
-    # decision_outcomes.append(decision_outcome)
-
-    # if reg_outcomes:
-    # decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(1), W_regularizer=reg_l(w_reg_outcome1/2.), **constraints)(outcome)
-    decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(1),
-                             W_regularizer=reg_l(w_reg_outcome1 / 2.))(outcome)
-    # else:
-    #     decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(1))(outcome)
-
-    # drop2 = Dropout(dropout, name='dropout_{}'.format(0))
-    drop2 = Dropout(dropout[0], name='dropout_{}'.format(0))
-
+    
+    # Create second decision output from first hidden layer
+    decision_outcome = Dense(1, 
+                            activation='linear', 
+                            name='o_linear1',
+                            kernel_regularizer=reg_l(w_reg_outcome1 / 2.))(outcome)  # Updated from W_regularizer
+    
+    # Apply dropout with TF2.x training parameter
+    drop2 = Dropout(dropout[0], name='dropout_0')
     outcome = drop2(outcome, training=dropout_testing)
 
-    # testing
+    # Apply batch normalization if requested
     if batch_normal:
         decision_outcome = BatchNormalization()(decision_outcome)
 
-    decision_outcome = Activation(activation=activation_decision, name='o{}'.format(1))(decision_outcome)
+    # Activate decision outcome and add to list
+    decision_outcome = Activation(activation=activation_decision, name='o1')(decision_outcome)
     decision_outcomes.append(decision_outcome)
 
+    # Handle additional layers if requested
+    maps_for_iteration = [] 
     if n_hidden_layers > 0:
-        maps = get_layer_maps(genes, n_hidden_layers, direction, add_unk_genes)
-        layer_inds = range(1, len(maps))
-        # if adaptive_reg:
-        #     w_regs = [float(w_reg)/float(i) for i in layer_inds]
-        # else:
-        #     w_regs = [w_reg] * len(maps)
-        # if adaptive_dropout:
-        #     dropouts = [float(dropout)/float(i) for i in layer_inds]
-        # else:
-        #     dropouts = [dropout]*len(maps)
-        print 'original dropout', dropout
-        print 'dropout', layer_inds, dropout, w_reg
-        w_regs = w_reg[1:]
-        w_reg_outcomes = w_reg_outcomes[1:]
-        dropouts = dropout[1:]
-        for i, mapp in enumerate(maps[0:-1]):
-            w_reg = w_regs[i]
-            w_reg_outcome = w_reg_outcomes[i]
-            # dropout2 = dropouts[i]
-            dropout = dropouts[1]
-            names = mapp.index
-            # names = list(mapp.index)
-            mapp = mapp.values
-            if shuffle_genes in ['all', 'pathways']:
-                mapp = shuffle_genes_map(mapp)
-            n_genes, n_pathways = mapp.shape
-            logging.info('n_genes, n_pathways {} {} '.format(n_genes, n_pathways))
-            # print 'map # ones {}'.format(np.sum(mapp))
-            print 'layer {}, dropout  {} w_reg {}'.format(i, dropout, w_reg)
-            layer_name = 'h{}'.format(i + 1)
-            if sparse:
-                hidden_layer = SparseTF(n_pathways, mapp, activation=activation, W_regularizer=reg_l(w_reg),
-                                        name=layer_name, kernel_initializer=kernel_initializer,
-                                        use_bias=use_bias, **constraints)
-            else:
-                hidden_layer = Dense(n_pathways, activation=activation, W_regularizer=reg_l(w_reg),
-                                     name=layer_name, kernel_initializer=kernel_initializer, **constraints)
+        # Get pathway maps from reactome
+        maps_for_iteration = get_layer_maps(genes, n_hidden_layers, direction, add_unk_genes)
+        
+        # Debug information
+        print(f'original dropout config: {dropout}')
+        
+        # Extract configurations for additional layers
+        w_regs_iter = w_reg[1:] 
+        w_reg_outcomes_list_iter = w_reg_outcomes[2:] 
+        dropout_list_iter = dropout[1:] 
 
+        # Iterate through maps and create layers
+        for i in range(len(maps_for_iteration) - 1):
+            # Extract map and create names
+            mapp = maps_for_iteration[i]
+            layer_name = f'h{i + 1}'
+            decision_name = f'o{i + 2}'
+            dropout_name = f'dropout_{i + 1}'
+
+            # Extract pathway dimensions
+            n_pathways = mapp.shape[0]
+            
+            # Store feature names
+            current_features_loop = maps_for_iteration[i].columns.tolist()
+            feature_names[layer_name] = current_features_loop
+            
+            # Debug information
+            print(f'Loop {i} - map shape: {maps_for_iteration[i].shape}, current_features count: {len(current_features_loop)}')
+            print(f'Loop {i} - using dropout_val: {dropout_list_iter[i]}, w_reg_val: {w_regs_iter[i]}')
+
+            # Create pathway layer with TF2.x parameter names
+            hidden_layer = SparseTF(n_pathways, 
+                                    mapp, 
+                                    activation=activation, 
+                                    kernel_regularizer=reg_l(w_regs_iter[i]),  # Updated from W_regularizer
+                                    name=layer_name, 
+                                    kernel_initializer=kernel_initializer, 
+                                    use_bias=use_bias,
+                                    **constraints)
             outcome = hidden_layer(outcome)
 
+            # Add attention mechanism if requested
             if attention:
-                attention_probs = Dense(n_pathways, activation='sigmoid', name='attention{}'.format(i + 1),
-                                        W_regularizer=l2(w_reg))(outcome)
-                outcome = multiply([outcome, attention_probs], name='attention_mul{}'.format(i + 1))
+                attention_probs = SparseTF(n_pathways, 
+                                          mapp, 
+                                          activation='sigmoid', 
+                                          kernel_regularizer=reg_l(w_regs_iter[i]),  # Updated from W_regularizer
+                                          name=f'attention{i + 1}')(outcome) 
+                # Updated multiply operation with TF2.x API
+                outcome = multiply([outcome, attention_probs], name=f'attention_mul{i + 1}')
 
-            # if reg_outcomes:
-            # decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(i + 2), W_regularizer=reg_l( w_reg2/(2**i)))(outcome)
-            # decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(i + 2), W_regularizer=reg_l( w_reg_outcome), **constraints)(outcome)
-            decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(i + 2),
-                                     W_regularizer=reg_l(w_reg_outcome))(outcome)
-            # else:
-            #     decision_outcome = Dense(1, activation='linear', name='o_linear{}'.format(i + 2))(outcome)
-            # testing
+            # Create decision output for this layer
+            decision_outcome = Dense(1, 
+                                    activation='linear', 
+                                    name=f'o_linear{i + 2}',
+                                    kernel_regularizer=reg_l(w_reg_outcomes_list_iter[i] / 2.))(outcome)  # Updated from W_regularizer
+
+            # Apply batch normalization if requested
             if batch_normal:
                 decision_outcome = BatchNormalization()(decision_outcome)
-            decision_outcome = Activation(activation=activation_decision, name='o{}'.format(i + 2))(decision_outcome)
-            decision_outcomes.append(decision_outcome)
-            drop2 = Dropout(dropout, name='dropout_{}'.format(i + 1))
-            outcome = drop2(outcome, training=dropout_testing)
 
-            feature_names['h{}'.format(i)] = names
-            # feature_names.append(names)
-        i = len(maps)
-        feature_names['h{}'.format(i - 1)] = maps[-1].index
-        # feature_names.append(maps[-1].index)
+            # Apply dropout with TF2.x training parameter
+            drop = Dropout(dropout_list_iter[i], name=dropout_name)
+            outcome = drop(outcome, training=dropout_testing)
+
+            # Activate decision outcome and add to list
+            decision_outcome = Activation(activation=activation_decision, name=decision_name)(decision_outcome)
+            decision_outcomes.append(decision_outcome)
+
+        # Debug information
+        print(f'After loop, final outcome tensor: {outcome}')
+
+    # Final debug information
+    print(f'Initial genes list: {genes}')
+    print(f'Initial features list: {features}')
+    
+    maps_len_for_print = len(maps_for_iteration) if n_hidden_layers > 0 else 0
+    print(f'Initial features_count: {len(features)}, processed maps_for_iteration count: {maps_len_for_print}')
+    
+    # Return model components
     return outcome, decision_outcomes, feature_names
+

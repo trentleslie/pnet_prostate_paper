@@ -516,9 +516,28 @@ def resolve_gradient_function(name_or_func):
     if isinstance(name_or_func, str):
         if name_or_func == 'gradient' or name_or_func == 'activation_gradient':
             return get_activation_gradients
+        elif name_or_func.startswith('deepexplain_') or name_or_func.startswith('shap_'):
+            # For TF2 compatibility, we map deepexplain and shap methods to activation_gradients_importance
+            # with appropriate method configuration
+            method = name_or_func.split('_')[1] if '_' in name_or_func else 'grad*input'
+            
+            # Create and return a function that matches the expected signature
+            def wrapped_activation_importance(model, X, y):
+                method_mapping = {
+                    'grad*input': 'input*grad',
+                    'grad': 'grad',
+                    'gradshap': 'grad',
+                    'deeplift': 'input*grad',
+                    'intgrad': 'input*grad',
+                    'elrp': 'input*grad',
+                    'occlusion': 'input*grad_abs'
+                }
+                activation_method = method_mapping.get(method, 'input*grad')
+                return get_activation_gradients_importance(model, X, y, method=activation_method)
+                
+            return wrapped_activation_importance
         else:
-            # Placeholder for future: re-integrate deepexplain/shap string resolvers here
-            # For now, only 'gradient' is supported through this direct path.
+            # Placeholder for future: re-integrate other method resolvers here
             # If other methods are needed, they should be passed as callables directly.
             print(f"Warning: Unknown gradient function string identifier '{name_or_func}'. GradientCheckpoint might not work as expected.")
             # Return a dummy function to prevent crashes, but signal issue.
@@ -783,6 +802,98 @@ def get_weights_gradient_outcome(model, x_train, y_train, detailed=False, target
         return gradients_list, gradients_list_sample_level
 
     return gradients_list
+
+
+def get_activation_gradients_importance(model, X, y, target=-1, method='input*grad', detailed=False):
+    """
+    Calculates feature importance scores using activation gradients.
+    This function is a TensorFlow 2.x compatible alternative to deepexplain methods.
+    
+    Args:
+        model: The Keras model
+        X: Input data
+        y: Target data
+        target: Target output index or layer name (default: -1, which means the last output)
+        method: Method to calculate importance:
+                - 'input*grad': Input multiplied by gradient (similar to DeepExplain's grad*input)
+                - 'input': Raw input values
+                - 'grad': Raw gradient values
+                - 'input*grad_abs': Input multiplied by absolute gradient
+                - 'grad_abs': Absolute gradient values
+        detailed: If True, returns both summarized and per-sample gradients
+                 If False, returns only summarized gradients
+                 
+    Returns:
+        If detailed=False: A dictionary mapping layer names to their importance scores
+        If detailed=True: A tuple of (importance_dict, per_sample_importance_dict)
+    """
+    # First, get activation gradients for all layers
+    activation_gradients = get_activation_gradients(model, X, y)
+    
+    # Get the relevant layers from the model
+    all_layers = get_layers(model)
+    layers_to_watch = [layer for layer in all_layers 
+                      if not isinstance(layer, (tf.keras.layers.InputLayer, 
+                                              tf.keras.layers.Dropout, 
+                                              tf.keras.layers.BatchNormalization)) 
+                      and hasattr(layer, 'output')]
+    
+    if not layers_to_watch:
+        return {} if not detailed else ({}, {})
+    
+    # Create a modified forward pass to get activations for each layer
+    layer_outputs = []
+    outputs_to_fetch = [layer.output for layer in layers_to_watch]
+    intermediate_activation_model = Model(inputs=model.inputs, outputs=outputs_to_fetch)
+    activations = intermediate_activation_model.predict(X)
+    
+    # If only one layer, wrap in list to keep consistent
+    if len(outputs_to_fetch) == 1 and not isinstance(activations, list):
+        activations = [activations]
+    
+    # Process gradients according to the specified method
+    importance_dict = {}
+    per_sample_importance_dict = {}
+    
+    for i, layer in enumerate(layers_to_watch):
+        layer_activations = activations[i]
+        layer_gradients = activation_gradients[i] if i < len(activation_gradients) else None
+        
+        if layer_gradients is None:
+            continue
+            
+        # Calculate importance based on method
+        if method == 'input*grad':
+            importance = layer_activations * layer_gradients
+        elif method == 'input':
+            importance = layer_activations
+        elif method == 'grad':
+            importance = layer_gradients
+        elif method == 'input*grad_abs':
+            importance = layer_activations * np.abs(layer_gradients)
+        elif method == 'grad_abs':
+            importance = np.abs(layer_gradients)
+        else:
+            # Default to input*grad
+            importance = layer_activations * layer_gradients
+            
+        # Store per-sample importance
+        per_sample_importance_dict[layer.name] = importance
+        
+        # Calculate summarized importance (averaging across samples)
+        if importance.ndim > 1:
+            # Sum across all dimensions except the feature dimension
+            # This assumes the feature dimension is the last one
+            summary_importance = np.sum(importance, axis=0)
+        else:
+            summary_importance = importance
+            
+        importance_dict[layer.name] = summary_importance
+    
+    if detailed:
+        return importance_dict, per_sample_importance_dict
+        
+    return importance_dict
 
 
 # def get_gradient_weights(model, X, y):

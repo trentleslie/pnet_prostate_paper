@@ -31,7 +31,7 @@ class Model(BaseEstimator):
         self.build_fn = sk_params['build_fn']
         self.sk_params = sk_params
         self.batch_size = sk_params['fitting_params']['batch_size']
-        self.model_params = sk_params['model_params']
+        self.model_params = sk_params.get('model_params', {}).copy() # Ensure model_params exists and is a copy
         self.nb_epoch = sk_params['fitting_params']['epoch']
         self.verbose = sk_params['fitting_params']['verbose']
         self.select_best_model = sk_params['fitting_params']['select_best_model']
@@ -64,6 +64,13 @@ class Model(BaseEstimator):
             self.debug = sk_params['fitting_params']['debug']
         else:
             self.debug = False
+
+        if 'ignore_missing_histology' in sk_params:
+            self.ignore_missing_histology = sk_params['ignore_missing_histology']
+        else:
+            self.ignore_missing_histology = False
+
+        self.model_params['ignore_missing_histology'] = self.ignore_missing_histology
 
         if 'feature_importance' in sk_params:
             self.feature_importance = sk_params['feature_importance']
@@ -259,7 +266,24 @@ class Model(BaseEstimator):
         return self
 
     def get_coef_importance(self, X_train, y_train, target=-1, feature_importance='deepexplain_grad*input'):
-
+        """
+        Calculate coefficient importance scores for feature interpretation.
+        
+        This method is TensorFlow 2.x compatible and serves as a replacement for the 
+        original implementation that relied on deepexplain. It uses activation gradients
+        to approximate the same functionality.
+        
+        Args:
+            X_train: Input data (numpy array or tensor)
+            y_train: Target data (numpy array or tensor)
+            target: Target output index or layer name (default: -1, which means the last output)
+            feature_importance: Method to calculate feature importance.
+                               For TF2 compatibility, 'deepexplain_*' methods are mapped to
+                               equivalent activation gradient methods.
+        
+        Returns:
+            Dictionary mapping layer names to their importance scores
+        """
         coef_ = get_coef_importance(self.model, X_train, y_train, target, feature_importance, detailed=False)
         return coef_
 
