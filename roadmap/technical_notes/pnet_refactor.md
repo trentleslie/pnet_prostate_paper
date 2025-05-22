@@ -1,6 +1,6 @@
 # P-NET Codebase Modernization: Python 3.11 & TensorFlow 2.x Upgrade
 
-**Date:** 2025-05-20
+**Date:** 2025-05-22
 
 ## Executive Summary
 This document provides a high-level overview of the ongoing project to modernize the P-NET (Prostate Network) codebase. The primary goal is to upgrade the system from its original Python 2.7 and TensorFlow 1.x foundation to Python 3.11 and TensorFlow 2.x. This modernization is crucial for enhancing the codebase's maintainability, performance, security, and compatibility with contemporary machine learning tools and libraries, ensuring the long-term viability and extensibility of the P-NET research platform.
@@ -43,24 +43,29 @@ Our approach to this modernization is phased to manage complexity and ensure ste
     *   Configuration of version control (Git) best practices.
 
 *   **Phase 2: TensorFlow 2.x Core Component Refactoring (In Progress)**
-    *   **Keras Utilities & Callbacks:** Updating TensorFlow backend functions, custom callbacks (e.g., `GradientCheckpoint` refactoring to use `tf.GradientTape`). *Substantial progress has been made in this area.*
-    *   **Model Building Functions:** Refactoring the core model definition scripts (e.g., `build_pnet2` in `prostate_models.py`, `get_pnet` in `model/builders_utils.py`) to utilize the `tensorflow.keras` API and TensorFlow 2.x patterns. *Detailed technical plans from AI assistant (Claude) are in place; implementation is the current primary focus.*
-    *   **Custom Layers:** Ensuring any custom model layers (e.g., `Diagonal`, `SparseTF`) are updated for TensorFlow 2.x compatibility.
+    *   **Core Utilities in `model/nn.py`:** Refactored methods like `get_layer_output` and `get_layer_outputs` to eliminate direct Keras backend calls (`K.function`, `K.learning_phase()`) and adopt TF2.x style (e.g., using temporary models for intermediate layer outputs). The `get_coef_importance` method is planned for a later stage.
+    *   **Custom Keras Layers & Constraints (Completed):**
+        *   Developed TF2.x compatible versions of `Diagonal` and `SparseTF` layers within `layers_custom.py`.
+        *   Implemented `SparseTFConstraint` for enforcing sparse connectivity, also in `layers_custom.py`.
+        *   Updated model builder functions to import and use these TF2.x layers.
+        *   Created and passed comprehensive unit tests for these layers.
+    *   **Custom Keras Callbacks (`model/callbacks_custom.py`):** Updated `FixedEarlyStopping` and `GradientCheckpoint` for TF2.x Keras imports. The core logic of `GradientCheckpoint` appears compatible, but its reliance on an external `gradient_function` requires further verification for full TF2.x compatibility.
+    *   **Model Factory & Builder Function Adaptation (`model/model_factory.py`, `model/nn.py`):** Significantly refactored the model factory to dynamically resolve `build_fn_name` strings (from YAML) to actual Python function objects. This includes creating Keras optimizer instances (e.g., `tf.keras.optimizers.Adam`) based on configuration and correctly structuring/passing parameters (including the new `ignore_missing_histology` flag) to `nn.Model` and subsequently to the specific builder functions (e.g., `build_dense` was adapted). This aligns with TF2.x practices for model instantiation and parameter handling.
 
 *   **Phase 3: Addressing Key Functionality & Critical Blockers (Planning / Next Steps)**
     *   **`nn.Model.get_coef_importance` Method:** Investigating and refactoring this method, crucial for understanding model behavior. *Initial planning documents (`FP001`) have been created.*
-    *   **Missing Parameter Files (`_params.yml`):** Developing and implementing a strategy to handle the missing model configuration files. This may involve recovering them if possible, or creating mock/template files and a minimal test model setup to enable pipeline testing. *Initial planning documents (`FP002`) have been created.*
+    *   **Missing Parameter Files (`_params.yml`):** Strategy developed based on log analysis and an example `_params.yml` from historical logs. A `template_params.yml` and initial specific mock parameter files (`mock_basic_nn_params.yml`, `mock_nn_with_gradient_importance_params.yml`) have been created in `/procedure/pnet_prostate_paper/test_configs/mock_params/`. These currently point to full-sized data files. The next sub-task is to create a true minimal, self-contained test dataset and a corresponding mock parameter file. *FP002 is in 2_inprogress.*
 
 *   **Phase 4: Integration, Comprehensive Testing & Validation (Future)**
     *   **Prerequisites:**
-        *   Secure [access to the datasets](https://zenodo.org/records/10775529) used in the original publication (e.g., Armenia et al. cohort, external validation cohorts referenced in Elmarakeby et al., Nature 2021). Refer to the paper's "Data availability" section and supplementary materials.
-        *   Successfully resolve the missing `_params.yml` files (as per roadmap item `FP002`) to reconstruct original model configurations or establish well-justified new configurations based on paper descriptions.
+        *   The primary dataset (P1000 cohort) and external validation datasets referenced in Elmarakeby et al., Nature 2021 appear to be locally available within `/procedure/pnet_prostate_paper/data/_database/` (unzipped from `_database.zip`). This includes processed data matrices, sample split definitions (`/data/_database/prostate/splits/`), and external validation cohorts (`/data/_database/prostate/external_validation/`).
+        *   Successfully resolve the missing `_params.yml` files (as per roadmap item `FP002`) by creating robust mock parameter files that utilize the available local data. This will enable reconstruction of model configurations or establishment of well-justified new configurations.
     *   **Core Model Performance Replication:**
-        *   Conduct end-to-end testing of the model's ability to predict disease state (primary vs. metastatic CRPC) using the main dataset.
-        *   Aim to replicate reported performance metrics (AUC, AUPRC, Accuracy, F1) using the paper's 80%/10%/10% train/validation/test splits and/or 5-fold cross-validation methodology.
+        *   Conduct end-to-end testing of the model's ability to predict disease state (primary vs. metastatic CRPC) using the main dataset files found in `/procedure/pnet_prostate_paper/data/_database/prostate/processed/`.
+        *   Aim to replicate reported performance metrics (AUC, AUPRC, Accuracy, F1) utilizing the specific train/validation/test split files located in `/procedure/pnet_prostate_paper/data/_database/prostate/splits/` to align with the paper's methodology.
         *   Compare the refactored P-NET performance against baselines similar to those used in the paper (e.g., Logistic Regression, SVM, a simple dense neural network).
     *   **External Validation:**
-        *   If external validation datasets (as mentioned in the paper) are accessible, test the trained model on these to assess generalizability, comparing against reported classification accuracies.
+        *   Utilize the external validation datasets found in `/procedure/pnet_prostate_paper/data/_database/prostate/external_validation/` to test the trained model and assess generalizability, comparing against reported classification accuracies.
     *   **Specific Analyses from the Paper to Consider for Replication:**
         *   **Biochemical Recurrence (BCR) Prediction:** If clinical outcome data linked to the patient samples is available, attempt to replicate the analysis correlating P-NET scores in primary tumors with BCR (referencing Fig. 2d in the paper).
         *   **Interpretability and Feature Importance:**
@@ -85,10 +90,14 @@ Successfully completing this modernization project will yield significant benefi
 *   **Long-Term Viability:** Ensuring the P-NET platform can continue to support cutting-edge research for years to come.
 *   **Attraction for Collaboration:** A modern tech stack is more appealing for new researchers and collaborators.
 
-## 5. Current Status (As of 2025-05-20)
+## 5. Current Status (As of 2025-05-22)
 
 *   The foundational Python 3 migration is largely complete.
-*   Significant progress has been made in refactoring core TensorFlow utilities and custom Keras callbacks, particularly the `GradientCheckpoint` mechanism.
+*   Significant progress has been made in refactoring core TensorFlow utilities and custom Keras components:
+    *   Core utilities in `model/nn.py` (e.g., `get_layer_output`) have been refactored for TF2.x.
+    *   Custom Keras Layers (`Diagonal`, `SparseTF`, `SparseTFConstraint`) are TF2.x compatible and tested.
+    *   Custom Keras Callbacks (`FixedEarlyStopping`, `GradientCheckpoint`) have updated imports; `GradientCheckpoint`'s `gradient_function` needs further TF2.x verification.
+    *   The model factory (`model/model_factory.py`) and parameter handling (`model/nn.py`) have been substantially refactored for TF2.x, supporting dynamic builder resolution, optimizer creation, and features like `ignore_missing_histology`.
 *   Detailed technical plans, assisted by AI (Claude), are in place for the refactoring of primary model-building functions; this is the immediate next major coding task.
 *   Planning has commenced for addressing the `nn.Model.get_coef_importance` functionality and the critical issue of missing `_params.yml` files, with dedicated roadmap items (`FP001`, `FP002`) established.
 

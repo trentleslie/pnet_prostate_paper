@@ -1,3 +1,25 @@
+## Status
+
+**Current Stage:** 2_inprogress
+
+## Progress Log
+
+*   **2025-05-22 (approx):**
+    *   Moved from `1_planning` to `2_inprogress`.
+    *   Analyzed `_logs.zip` and `_database.zip` contents provided by USER.
+    *   Key Insight: Discovered an example `_params.yml` file (`P-net_ALL_params.yml`) saved within the historical logs. This file provides the canonical structure for `model_params` and `data_params`, including nested structures.
+    *   Created `template_params.yml` in `/procedure/pnet_prostate_paper/test_configs/mock_params/` based on the structure of the discovered `P-net_ALL_params.yml`. This template includes detailed comments and placeholders.
+    *   Path A (Investigation & Recovery) is now largely superseded by the findings from log analysis, which provided a concrete example of a `_params.yml`.
+*   **Next Steps (Path B - Mock/Template Parameter File System):**
+    *   Create a `README.md` for the `/procedure/pnet_prostate_paper/test_configs/` directory.
+    *   Develop specific mock parameter files (e.g., `mock_basic_nn_params.yml`, `mock_nn_with_gradient_importance_params.yml`) using `template_params.yml`.
+    *   **Data File Path Strategy for Mock Configurations:**
+        *   **Gene List:** Use `/procedure/pnet_prostate_paper/data/_database/genes/tcga_prostate_expressed_genes_and_cancer_genes.csv`.
+        *   **Response/Outcome File:** Use `/procedure/pnet_prostate_paper/data/_database/prostate/processed/response_paper.csv`.
+        *   **Sample Split Definition:** Use a small split file like `/procedure/pnet_prostate_paper/data/_database/prostate/splits/test_set.csv` to define the cohort of samples for mock testing.
+        *   **Main Data Matrices (Mutation, CNV, Expression):** For initial mock parameter file creation and testing of loading logic, these will point to the full-sized files within `/procedure/pnet_prostate_paper/data/_database/prostate/processed/` (e.g., `P1000_final_analysis_set_cross_important_only.csv`, `P1000_data_CNA_paper.csv`, `P1000_data_tpm.csv`).
+    *   **Sub-task: Create True Minimal Test Dataset:** Add a task to this FP (or create a new FP) to generate a self-contained, minimal dataset (subsetted data matrices, gene list, response, and split files) in a new `/procedure/pnet_prostate_paper/test_data/minimal_prostate_set/` directory. This will involve scripting the subsetting process. Create a dedicated mock `_params.yml` for this minimal set.
+
 # Design: Strategy for Missing _params.yml Files / Test Data Generation
 
 ## 1. Overview

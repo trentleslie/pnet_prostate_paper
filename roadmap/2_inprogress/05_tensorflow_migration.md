@@ -10,6 +10,12 @@
     *   Changed `keras.*` imports to `tensorflow.keras.*` in `model/nn.py`.
     *   *Next Steps:* Ensure all files using Keras/TensorFlow have updated imports.
 2.  **Update TensorFlow/Keras API Calls:** (Partially Done)
+
+2.5. **Refactor Custom Keras Layers and Constraints:** (Done)
+    *   Created TF2.x compatible versions of custom Keras layers: `Diagonal` and `SparseTF`.
+    *   Implemented `SparseTFConstraint` class for sparse connectivity patterns.
+    *   Updated imports in model builder functions to utilize these TF2.x compatible layers.
+    *   Developed and successfully passed comprehensive unit tests for the refactored layers.
     *   `tf.random.set_random_seed` to `tf.random.set_seed` (e.g., in `train/run_me.py`). (Done)
     *   Model saving: Refactored `model.to_json()` & `model.save_weights()` to `model.save()` in `model/nn.py`, while attempting to keep JSON architecture for backward compatibility. (Done, but syntax error fix was problematic).
     *   Model loading: Reviewed `load_model` in `model/nn.py`; current `build_fn` pattern seems adaptable for TF2. (No changes made yet, further review needed).
