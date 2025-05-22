@@ -1,0 +1,134 @@
+# Template for _params.yml configuration files
+# This structure is based on an example _params.yml found in the project logs.
+# It's used by utils.loading_utils.DataModelLoader to load model and data configurations.
+
+# --- Data Parameters ---
+# Defines how data is loaded and preprocessed.
+data_params:
+  id: "ALL" # Or a specific dataset identifier
+  type: "prostate_paper" # Corresponds to data.prostate_paper.data_reader.ProstateDataPaper
+  params:
+    # Parameters for ProstateDataPaper.__init__()
+    data_type: # List of data types to load (e.g., 'mut_important', 'cnv_del', 'expr')
+      - "mut_important"
+      # - "cnv_del"
+      # - "cnv_amp"
+      # - "expr"
+    account_for_data_type: null # Optional: list of other data types to account for
+    cnv_levels: 3 # For CNV data processing
+    cnv_filter_single_event: true # For CNV data processing
+    mut_binary: true # Binarize mutation data
+    # Path to the gene list file. This path is often relative to a base directory
+    # where the contents of _database.zip (like the 'genes' folder) are expected.
+    # For example, if _database.zip is unpacked into a '_database' dir at project root,
+    # this might be '_database/genes/tcga_prostate_expressed_genes_and_cancer_genes.csv'.
+    # For mock testing, you might point this to a dummy file within 'test_data/'.
+    selected_genes: "genes/tcga_prostate_expressed_genes_and_cancer_genes.csv"
+    combine_type: "union" # 'union' or 'intersection' for combining features
+    use_coding_genes_only: true
+    drop_AR: false
+    balanced_data: false
+    cnv_split: false
+    shuffle: false # Shuffle samples during loading (distinct from training shuffle)
+    selected_samples: null # Optional: path to a CSV file with 'Tumor_Sample_Barcode' to filter samples
+    training_split: 0 # Integer for selecting training_set_{i}.csv from 'prostate/splits/'
+
+# --- Model Parameters ---
+# Defines the model architecture, training, and evaluation.
+model_params:
+  id: "P-net_mock_template" # Unique identifier for this model configuration
+  type: "nn" # Model type, 'nn' for neural network (model.nn.Model)
+  params:
+    # Function to build the Keras model.
+    # Format: 'module.submodule.function_name'
+    build_fn: "model.builders.prostate_models.build_pnet2"
+
+    # Parameters for model fitting (passed to Keras model.fit and custom callbacks)
+    fitting_params:
+      batch_size: 50
+      epoch: 10 # Reduced for faster mock testing
+      lr: 0.001
+      class_weight: "auto" # 'auto' or specific weights like {0: 0.5, 1: 1.0}
+      verbose: 2 # Keras verbosity
+      shuffle: true # Shuffle data during training epochs
+      early_stop: false # Enable/disable early stopping callback
+      # monitor: "val_o6_f1" # Metric to monitor for early stopping / best model
+      # select_best_model: false # Save the best model based on 'monitor'
+      # reduce_lr: false # Enable/disable learning rate reduction callback
+      # reduce_lr_after_nepochs:
+      #   epochs_drop: 10 # Reduced for mock
+      #   drop: 0.25
+      samples_per_epoch: 10 # For Keras < 2, steps_per_epoch. For Keras >=2, usually not needed if x is a Numpy array.
+      save_gradient: false # For GradientCheckpoint callback
+      # feature_importance: "deepexplain_deeplift" # Method for feature/gradient importance. Set if save_gradient is true.
+      save_name: "pnet_mock" # Base name for saved model files
+      n_outputs: 6 # Number of output layers/heads in the P-Net model
+      prediction_output: "average" # How to handle multiple outputs for prediction
+      debug: false
+
+    # Parameters for the model building function (e.g., build_pnet2)
+    # This is the inner 'model_params' dictionary.
+    model_params:
+      activation: "tanh" # Activation function for hidden layers
+      n_hidden_layers: 3 # Reduced for faster mock testing
+      dropout: # List of dropout rates, length should be n_hidden_layers + 2 (input, hidden layers, final hidden before outputs)
+        - 0.5
+        - 0.1
+        - 0.1
+        - 0.1
+        - 0.1
+      # w_reg: # List of L1/L2 regularization weights for layers. Length: n_hidden_layers + 1 (input + hidden layers)
+      #   - 0.001
+      #   - 0.001
+      #   - 0.001
+      #   - 0.001
+      # w_reg_outcomes: # List of L1/L2 regularization weights for output layers. Length: n_outputs
+      #   - 0.01
+      #   - 0.01
+      kernel_initializer: "lecun_uniform"
+      optimizer: "Adam"
+      use_bias: true
+      loss_weights: 1 # Can be a list if multiple outputs have different loss weights
+      shuffle_genes: false # Custom P-Net parameter
+      dropout_testing: false # Custom P-Net parameter
+      add_unk_genes: false # Custom P-Net parameter
+      attention: false # Custom P-Net parameter
+
+      # Nested data_params: This structure was observed in the example logs.
+      # It might be used by the build_fn or other parts of the model construction.
+      # For the template, this often mirrors the top-level data_params or a subset.
+      data_params:
+        id: "ALL"
+        type: "prostate_paper"
+        params:
+          data_type:
+            - "mut_important"
+          # account_for_data_type: null # Only specify if different from top-level
+          # cnv_levels: 3
+          # mut_binary: true
+          selected_genes: "genes/tcga_prostate_expressed_genes_and_cancer_genes.csv" # Or other relevant gene list
+          # combine_type: "union"
+          # use_coding_genes_only: true
+          # drop_AR: false
+          # balanced_data: false
+          # training_split: 0
+
+# --- Pipeline Parameters ---
+# Defines the overall experimental pipeline (e.g., how to split data, evaluation).
+pipeline_params:
+  type: "one_split" # Type of pipeline (e.g., 'one_split', 'cross_validation')
+  params:
+    eval_dataset: "test" # Which dataset to evaluate on ('test', 'validate')
+    save_train: true # Whether to save training set predictions/metrics
+
+# --- Preprocessing Parameters ---
+# Defines any global preprocessing steps.
+pre_params:
+  type: null # Type of preprocessing, null if none or handled within data_loader
+
+# --- Experiment Tracking (Optional) ---
+# These were present in the example, might be used for logging/organization.
+exp_name: "mock_experiment/template" # Placeholder for experiment name/path
+features_params: {} # Placeholder for feature engineering parameters, if any
+# score: "{}" # Placeholder for storing evaluation scores after a run. Usually populated by the script.
+task: "classification_binary"

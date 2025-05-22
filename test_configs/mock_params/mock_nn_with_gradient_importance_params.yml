@@ -1,0 +1,77 @@
+# Mock _params.yml for NN with Gradient Importance
+# Purpose: Test GradientCheckpoint callback and gradient saving features.
+
+data_params:
+  id: "mock_gradient_mut_only"
+  type: "prostate_paper"
+  params:
+    data_dir_path: "/procedure/pnet_prostate_paper/data/" # Points to dir containing '_database'
+    data_type:
+      - "mut_important"
+    selected_genes: "tcga_prostate_expressed_genes_and_cancer_genes.csv"
+    training_split: null # Uses default 'training_set.csv' and 'test_set.csv'
+    account_for_data_type: null
+    cnv_levels: 3
+    cnv_filter_single_event: true
+    mut_binary: true
+    combine_type: "union"
+    use_coding_genes_only: true
+    drop_AR: false
+    balanced_data: false
+    cnv_split: false
+    shuffle: false
+    selected_samples: null
+
+model_params:
+  id: "P-net_mock_gradient"
+  type: "nn"
+  params:
+    build_fn: "model.builders.prostate_models.build_pnet2"
+    fitting_params:
+      batch_size: 16
+      epoch: 5
+      lr: 0.001
+      class_weight: "auto"
+      verbose: 2
+      shuffle: true
+      early_stop: false
+      samples_per_epoch: 10
+      # Enable gradient saving for GradientCheckpoint
+      save_gradient: true
+      feature_importance: "gradient" # Specific method for GradientCheckpoint
+      save_name: "pnet_mock_gradient"
+      n_outputs: 6
+      prediction_output: "average"
+      debug: false
+    model_params: # Inner model_params for build_pnet2
+      activation: "tanh"
+      n_hidden_layers: 1
+      dropout:
+        - 0.1
+        - 0.1
+        - 0.1
+      kernel_initializer: "lecun_uniform"
+      optimizer: "Adam"
+      use_bias: true
+      loss_weights: 1
+      data_params:
+        id: "mock_gradient_mut_only"
+        type: "prostate_paper"
+        params:
+          data_dir_path: "/procedure/pnet_prostate_paper/data/"
+          data_type:
+            - "mut_important"
+          selected_genes: "tcga_prostate_expressed_genes_and_cancer_genes.csv"
+
+pipeline_params:
+  type: "one_split"
+  params:
+    eval_dataset: "test"
+    save_train: false
+
+pre_params:
+  type: null
+
+exp_name: "mock_experiment/gradient_nn"
+features_params: {}
+task: "classification_binary"

@@ -1,0 +1,81 @@
+# Mock _params.yml for a basic Neural Network test
+# Purpose: Minimal configuration for quick loading and basic pipeline testing.
+
+data_params:
+  id: "mock_basic_mut_only"
+  type: "prostate_paper"
+  params:
+    # IMPORTANT: This path points to the directory containing the '_database' folder.
+    data_dir_path: "/procedure/pnet_prostate_paper/data/"
+    data_type:
+      - "mut_important" # Using only mutation data for simplicity
+    selected_genes: "tcga_prostate_expressed_genes_and_cancer_genes.csv" # Filename in _database/genes/
+    # training_split: null will make ProstateDataPaper use default 'training_set.csv' and 'test_set.csv'
+    training_split: null
+    # Other data processing params (can be kept from template or simplified if not used by mut_important)
+    account_for_data_type: null
+    cnv_levels: 3
+    cnv_filter_single_event: true
+    mut_binary: true
+    combine_type: "union"
+    use_coding_genes_only: true
+    drop_AR: false
+    balanced_data: false
+    cnv_split: false
+    shuffle: false
+    selected_samples: null
+
+model_params:
+  id: "P-net_mock_basic"
+  type: "nn"
+  params:
+    build_fn: "model.builders.prostate_models.build_pnet2"
+    fitting_params:
+      batch_size: 16 # Small batch size
+      epoch: 5       # Very few epochs for quick run
+      lr: 0.001
+      class_weight: "auto"
+      verbose: 2
+      shuffle: true
+      early_stop: false
+      samples_per_epoch: 10 # Or steps_per_epoch
+      save_gradient: false # Disabled for basic test
+      save_name: "pnet_mock_basic"
+      n_outputs: 6
+      prediction_output: "average"
+      debug: false
+    model_params: # Inner model_params for build_pnet2
+      activation: "tanh"
+      n_hidden_layers: 1 # Minimal hidden layers
+      dropout:
+        - 0.1 # Input
+        - 0.1 # Hidden layer 1
+        - 0.1 # Final hidden before output
+      kernel_initializer: "lecun_uniform"
+      optimizer: "Adam"
+      use_bias: true
+      loss_weights: 1
+      # Nested data_params for model_params - should mirror relevant parts from top-level
+      data_params:
+        id: "mock_basic_mut_only"
+        type: "prostate_paper"
+        params:
+          data_dir_path: "/procedure/pnet_prostate_paper/data/" # Consistent path
+          data_type:
+            - "mut_important"
+          selected_genes: "tcga_prostate_expressed_genes_and_cancer_genes.csv"
+          # training_split: null # Consistent split strategy
+
+# --- Pipeline, Preprocessing, and Experiment Tracking (can be minimal) ---
+pipeline_params:
+  type: "one_split"
+  params:
+    eval_dataset: "test"
+    save_train: false
+
+pre_params:
+  type: null
+
+exp_name: "mock_experiment/basic_nn"
+features_params: {}
+task: "classification_binary"
