@@ -15,6 +15,11 @@ __pycache__/
 # Logs
 logs/
 _logs/
+_logs.zip
+
+# Data
+_database.zip
+_database/
 
 # OS generated files
 .DS_Store
@@ -24,3 +29,6 @@ _logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Temporary files
+model/layers_custom_tf2.py
