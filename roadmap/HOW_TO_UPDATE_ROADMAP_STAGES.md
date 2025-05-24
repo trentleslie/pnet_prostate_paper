@@ -2,7 +2,7 @@
 
 ## 1. Introduction
 
-This document provides a step-by-step guide on how to use a project status update (typically found in `roadmap/_status_updates/`) to populate and manage the staged feature development workflow within the `/home/ubuntu/biomapper/roadmap/` directory. This system helps track features from raw ideas through planning, implementation, completion, and archiving, leveraging AI assistance via predefined stage gate prompts.
+This document provides a step-by-step guide on how to use a project status update (typically found in `roadmap/_status_updates/`) to populate and manage the staged feature development workflow within the {{PROJECT_ROOT}}/roadmap/ directory. This system helps track features from raw ideas through planning, implementation, completion, and archiving, leveraging AI assistance via predefined stage gate prompts.
 
 ## 2. Prerequisites
 
@@ -106,8 +106,8 @@ For features or ideas that become obsolete, are indefinitely deferred, or supers
 ## 5. Tips for Effective Use
 
 -   **Be Explicit with AI:** When instructing your AI assistant, provide clear, full paths to the relevant prompt files and feature files/folders.
--   **Always Use Full Absolute File Paths:** When referencing files in documentation, always use complete absolute paths (e.g., `/home/ubuntu/biomapper/scripts/phase3_bidirectional_reconciliation.py` instead of just `phase3_bidirectional_reconciliation.py`). This ensures clarity and allows both humans and AI to quickly locate the exact files.
+-   **Always use full absolute file paths when referencing files in documentation, always use complete absolute paths (e.g., {{PROJECT_ROOT}}/scripts/phase3_bidirectional_reconciliation.py instead of just phase3_bidirectional_reconciliation.py). This ensures clarity and allows both humans and AI to quickly locate the exact files.
 -   **Iterate and Refine:** The AI-generated content is a starting point. Review, edit, and add your expertise to all documents.
 -   **Keep Status Updates Detailed:** The more detail in your `roadmap/_status_updates/` files, the easier it will be to identify and process items for the roadmap stages.
--   **Adapt the Process:** This is a template. Feel free to adapt the stage gate prompts, templates, and workflow to best suit the Biomapper project's evolving needs.
+-   **Adapt the Process:** This is a template. Feel free to adapt the stage gate prompts, templates, and workflow to best suit the project's evolving needs.
 -   **Consider Updating `roadmap/README.md`:** Once this system is established, you might want to update the main `roadmap/README.md` to describe this new workflow and point to this `HOW_TO_UPDATE_ROADMAP_STAGES.md` guide.

@@ -1,7 +1,7 @@
 # Development Status Update Prompt
 
 ```markdown
-Based on our recent work on the pnet_prostate_paper project, please create a comprehensive status update document. Begin by reviewing the 1-3 most recent status update files in `/procedure/pnet_prostate_paper/roadmap/_status_updates/` (sorted by date) to understand context and progress history. Then incorporate information from the roadmap files in `/procedure/pnet_prostate_paper/roadmap/` as well as our recent conversations.
+Based on our recent work on the project, please create a comprehensive status update document. Begin by reviewing the 1-3 most recent status update files in {{PROJECT_ROOT}}/roadmap/_status_updates/ (sorted by date) to understand context and progress history. Then incorporate information from the roadmap files in {{PROJECT_ROOT}}/roadmap/ as well as our recent conversations.
 
 While maintaining awareness of historical context from previous updates, prioritize recent memory and progress in your update. Please organize your response into the following sections:
 
@@ -12,7 +12,7 @@ While maintaining awareness of historical context from previous updates, priorit
 - Prioritize accomplishments from the most recent development period over those already mentioned in previous status updates
 
 ## 2. Current Project State
-- Summarize the overall status of the pnet_prostate_paper project
+- Summarize the overall status of the project
 - Describe the state of major components/modules
 - Identify any areas that are stable vs. in active development
 - Note any outstanding critical issues or blockers
@@ -34,12 +34,12 @@ While maintaining awareness of historical context from previous updates, priorit
 - Note areas where we might need to revisit our approach
 - Identify topics requiring further research or exploration
 
-Please be specific and reference relevant files, components, or concepts by name where appropriate. Always use full absolute file paths when referencing files (e.g., `/home/ubuntu/biomapper/scripts/phase3_bidirectional_reconciliation.py` instead of just `phase3_bidirectional_reconciliation.py`) for clarity and to enable quick location of the exact files. This document serves as both a record of our progress and a guide for continuing development.
+Please be specific and reference relevant files, components, or concepts by name where appropriate. Always use full absolute file paths when referencing files (e.g., {{PROJECT_ROOT}}/scripts/phase3_bidirectional_reconciliation.py instead of just phase3_bidirectional_reconciliation.py) for clarity and to enable quick location of the exact files. This document serves as both a record of our progress and a guide for continuing development.
 
-In addition to this status update, please also prepare a suggested prompt for the next work session by updating the file `/procedure/pnet_prostate_paper/roadmap/_status_updates/_suggested_next_prompt.md`. This should include:
+In addition to this status update, please also prepare a suggested prompt for the next work session by updating the file {{PROJECT_ROOT}}/roadmap/_status_updates/_suggested_next_prompt.md. This should include:
 
 1. **Context Brief**: A 2-3 sentence summary of the current status and most important recent context
-2. **Initial Steps**: Begin with instructions to review `/procedure/pnet_prostate_paper/roadmap/CLAUDE.md` for overall project context
+2. **Initial Steps**: Begin with instructions to review {{PROJECT_ROOT}}/CLAUDE.md for overall project context
 3. **Work Priorities**: Clear recommendations on what tasks should be prioritized next
 4. **References**: References to key files mentioned in your status update
 5. **Workflow Integration**: Suggestions for incorporating Claude into the workflow as an independent step, including any specific, detailed Claude prompts if needed
@@ -50,7 +50,7 @@ This prompt should align with the priorities identified in your status update bu
 ## Storage Recommendations
 Save status documents with the following filename format:
 ```
-/procedure/pnet_prostate_paper/roadmap/_status_updates/YYYY-MM-DD-[brief-description].md
+/home/ubuntu/biomapper/roadmap/_status_updates/YYYY-MM-DD-[brief-description].md
 ```
 
 Examples:
@@ -60,6 +60,6 @@ Examples:
 
 The suggested next prompt should always be saved to:
 ```
-/procedure/pnet_prostate_paper/roadmap/_status_updates/_suggested_next_prompt.md
+/home/ubuntu/biomapper/roadmap/_status_updates/_suggested_next_prompt.md
 ```
 Ensure you overwrite any existing content in this file to keep the prompt current.

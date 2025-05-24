@@ -1,6 +1,6 @@
-# P-NET Project Roadmap
+# Project Roadmap
 
-This directory houses the planning, tracking, and reference materials for the P-NET project. We utilize a staged development workflow to manage features from conception to completion.
+This directory houses the planning, tracking, and reference materials for this toolkit. We utilize a staged development workflow to manage features from conception to completion.
 
 ## Staged Development Workflow
 
@@ -18,8 +18,8 @@ Our roadmap is managed through a series of stage directories, allowing for clear
 
 ### Supporting Directories:
 
--   `_reference/`: Contains foundational documents, architecture notes, design documents, style guides, and logs.
--   `_templates/`: Standardized templates for feature documents used by the stage gate prompts.
+-   `_reference/`: Contains foundational documents, existing architecture notes, design documents for larger systems (e.g., `api/`, `architecture/`, `enhanced_mappers/`, `ui/` which were moved here), style guides, and logs like `completed_features_log.md`.
+-   `_templates/`: Standardized templates for feature documents (`feature_readme_template.md`, `spec_template.md`, etc.) used by the stage gate prompts.
 -   `_status_updates/`: Chronological project status updates. These are key inputs for updating the staged roadmap.
 -   `technical_notes/`: In-depth technical explorations, investigations, and notes on specific components or challenges.
 
@@ -32,12 +32,3 @@ The current development status, ongoing tasks, and planned work can be dynamical
 -   Review `2_inprogress/` for features under active development.
 -   Review `3_completed/` for recently finished work.
 
-## Long-term Vision
-
-P-NET aims to be a comprehensive framework for cancer classification and discovery through a biologically informed deep neural network that:
-
-1. Incorporates prior knowledge of molecular networks to predict cancer progression
-2. Identifies the biological factors that contribute to cancer development and progression
-3. Provides an interpretable model with biological meaning assigned to nodes and connections
-4. Supports multi-omics data integration (mutations, copy number, gene expression)
-5. Enables discovery of novel biomarkers and therapeutic targets

@@ -1,6 +1,6 @@
 # LLM Project Onboarding Instructions
 
-You are being asked to analyze a development status document for the pnet_prostate_paper project. This document contains critical context about the current state of development, recent progress, and upcoming tasks.
+You are being asked to analyze a development status document for the project. This document contains critical context about the current state of development, recent progress, and upcoming tasks.
 
 ## Instructions
 
