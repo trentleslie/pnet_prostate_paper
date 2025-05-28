@@ -37,6 +37,8 @@ nn_pathway = {
                 'activation': 'tanh',
                 'data_params': data_base,
                 'kernel_initializer': 'lecun_uniform',
+                'ignore_missing_histology': True,
+
             }, 'fitting_params': dict(samples_per_epoch=10,
                                       select_best_model=False,
                                       monitor='val_o6_f1',

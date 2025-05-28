@@ -215,6 +215,9 @@ def get_pnet(inputs, features, genes, n_hidden_layers, direction, activation, ac
     # Initialize decision outcomes list
     decision_outcomes = []
     
+    # Store feature names for the initial gene layer (h0)
+    feature_names['h0'] = genes
+    
     # Create first decision output directly from inputs
     decision_outcome = Dense(1, 
                             activation='linear', 
@@ -258,7 +261,7 @@ def get_pnet(inputs, features, genes, n_hidden_layers, direction, activation, ac
         dropout_list_iter = dropout[1:] 
 
         # Iterate through maps and create layers
-        for i in range(len(maps_for_iteration) - 1):
+        for i in range(len(maps_for_iteration)):
             # Extract map and create names
             mapp = maps_for_iteration[i]
             layer_name = f'h{i + 1}'
@@ -266,7 +269,7 @@ def get_pnet(inputs, features, genes, n_hidden_layers, direction, activation, ac
             dropout_name = f'dropout_{i + 1}'
 
             # Extract pathway dimensions
-            n_pathways = mapp.shape[0]
+            n_pathways = mapp.shape[1]
             
             # Store feature names
             current_features_loop = maps_for_iteration[i].columns.tolist()
@@ -289,8 +292,17 @@ def get_pnet(inputs, features, genes, n_hidden_layers, direction, activation, ac
 
             # Add attention mechanism if requested
             if attention:
+                # For attention, we need a pathway-to-pathway map (n_pathways x n_pathways)
+                # Create an identity map where each pathway can attend to itself
+                import numpy as np
+                import pandas as pd
+                attention_map = np.eye(n_pathways, dtype=np.float32)
+                attention_map_df = pd.DataFrame(attention_map, 
+                                               index=mapp.columns,  # pathway names
+                                               columns=mapp.columns)  # same pathway names
+                
                 attention_probs = SparseTF(n_pathways, 
-                                          mapp, 
+                                          attention_map_df, 
                                           activation='sigmoid', 
                                           kernel_regularizer=reg_l(w_regs_iter[i]),  # Updated from W_regularizer
                                           name=f'attention{i + 1}')(outcome) 

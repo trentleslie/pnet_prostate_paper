@@ -16,10 +16,91 @@ from model.model_utils import print_model, get_layers # Already present
 # assumes the first node connected to the first n nodes and so on
 def build_pnet(optimizer, w_reg, add_unk_genes=True, sparse=True, dropout=0.5, use_bias=False, activation='tanh',
                loss='binary_crossentropy', data_params=None, n_hidden_layers=1, direction='root_to_leaf',
-               batch_normal=False, kernel_initializer='glorot_uniform', shuffle_genes=False, reg_outcomes=False):
+               batch_normal=False, kernel_initializer='glorot_uniform', shuffle_genes=False, reg_outcomes=False,
+               ignore_missing_histology=True):
+    """
+    Builds a Pathway Network (P-NET) model using TensorFlow 2.x Keras.
+
+    This version is an earlier implementation compared to build_pnet2 and may have
+    fewer configurable options or different default behaviors for some internal
+    parameters passed to get_pnet.
+
+    Args:
+        optimizer: Keras optimizer for model compilation (e.g., 'Adam', tf.keras.optimizers.Adam()).
+        w_reg (float): Weight regularization factor (L2) for pathway layers.
+        add_unk_genes (bool, optional): Whether to add a node for unknown/unmapped genes.
+            Defaults to True.
+        sparse (bool, optional): Whether to use sparse connections/layers where applicable.
+            Defaults to True.
+        dropout (float, optional): Dropout rate to apply. Defaults to 0.5.
+        use_bias (bool, optional): Whether to use bias terms in Dense layers. Defaults to False.
+        activation (str, optional): Activation function for hidden layers (e.g., 'tanh', 'relu').
+            Defaults to 'tanh'.
+        loss (str, optional): Loss function for model compilation. Defaults to 'binary_crossentropy'.
+        data_params (dict, optional): Parameters for data loading and preprocessing via the Data class.
+            If None, default Data parameters are used. See `data.data_access.Data`.
+        n_hidden_layers (int, optional): Number of hidden pathway layers in the P-NET.
+            Defaults to 1.
+        direction (str, optional): Direction of information flow in pathways ('root_to_leaf' or 'leaf_to_root').
+            Defaults to 'root_to_leaf'.
+        batch_normal (bool, optional): Whether to include batch normalization layers.
+            Defaults to False.
+        kernel_initializer (str, optional): Kernel initializer for Dense layers (e.g., 'glorot_uniform').
+            Defaults to 'glorot_uniform'.
+        shuffle_genes (bool, optional): Whether to shuffle gene order/connections (experimental).
+            Defaults to False.
+        reg_outcomes (bool, optional): Whether to apply regularization to outcome layers.
+            Note: This parameter name differs from w_reg_outcomes in build_pnet2.
+            Defaults to False.
+        ignore_missing_histology (bool, optional): If True (default), the model is built using only
+            genomic data, and any histology data is ignored. If False, the model will attempt
+            to use histology data (currently, this path is not fully implemented and will
+            default to genomic-only with a warning).
+
+    Returns:
+        tuple: A tuple containing:
+            - model (tf.keras.Model): The compiled Keras P-NET model.
+            - feature_names (list): A list of feature names corresponding to model layers/outputs.
+    """
     print(data_params)
     print(f'n_hidden_layers: {n_hidden_layers}')
-    data = Data(**data_params)
+    print(f'ignore_missing_histology: {ignore_missing_histology}')
+    
+    # Handle histology data based on ignore_missing_histology flag
+    if ignore_missing_histology:
+        # Current implementation: Use only genomic data (mutations, CNAs)
+        # Ensure data_params exclude any histology-related features
+        if data_params is None:
+            data_params = {}
+        
+        # Create a copy to avoid modifying original params
+        genomic_data_params = data_params.copy()
+        # Ensure 'params' key exists if it's expected by Data's __init__ for ProstateDataPaper
+        if 'params' not in genomic_data_params:
+            genomic_data_params['params'] = {}
+        genomic_data_params['include_histology_features'] = False
+        
+        data = Data(**genomic_data_params)
+        logging.info('Building P-NET model with genomic data only (histology ignored)')
+    else:
+        # Future implementation: Could integrate histology data pathway here
+        # For now, behave identically to ignore_missing_histology=True
+        logging.warning('ignore_missing_histology=False specified, but histology pathway not yet implemented. '
+                       'Using genomic data only.')
+        
+        if data_params is None:
+            data_params = {}
+        
+        # Create a copy to avoid modifying original params
+        genomic_data_params = data_params.copy()
+        # Ensure 'params' key exists if it's expected by Data's __init__ for ProstateDataPaper
+        if 'params' not in genomic_data_params:
+            genomic_data_params['params'] = {}
+        genomic_data_params['include_histology_features'] = True
+        
+        data = Data(**genomic_data_params)
+        logging.info('Building P-NET model with genomic data only (histology pathway not implemented)')
+    
     x, y, info, cols = data.get_data()
     print(x.shape)
     print(y.shape)
@@ -59,17 +140,14 @@ def build_pnet(optimizer, w_reg, add_unk_genes=True, sparse=True, dropout=0.5, u
                                                      activation,
                                                      activation_decision,
                                                      w_reg,
-                                                     w_reg_outcomes,
+                                                     reg_outcomes,
                                                      dropout,
                                                      sparse,
                                                      add_unk_genes,
                                                      batch_normal,
                                                      use_bias=use_bias,
                                                      kernel_initializer=kernel_initializer,
-                                                     shuffle_genes=shuffle_genes,
-                                                     attention=attention,
-                                                     dropout_testing=dropout_testing,
-                                                     non_neg=non_neg
+                                                     shuffle_genes=shuffle_genes
                                                      # reg_outcomes=reg_outcomes,
                                                      # adaptive_reg =adaptive_reg,
                                                      # adaptive_dropout=adaptive_dropout
@@ -82,7 +160,7 @@ def build_pnet(optimizer, w_reg, add_unk_genes=True, sparse=True, dropout=0.5, u
 
     print('Compiling...')
 
-    model = Model(input=[ins], output=decision_outcomes)
+    model = Model(inputs=ins, outputs=decision_outcomes)
 
     # n_outputs = n_hidden_layers + 2
     n_outputs = len(decision_outcomes)
@@ -108,7 +186,8 @@ def build_pnet(optimizer, w_reg, add_unk_genes=True, sparse=True, dropout=0.5, u
 def build_pnet2(optimizer, w_reg, w_reg_outcomes, add_unk_genes=True, sparse=True, loss_weights=1.0, dropout=0.5,
                 use_bias=False, activation='tanh', loss='binary_crossentropy', data_params=None, n_hidden_layers=1,
                 direction='root_to_leaf', batch_normal=False, kernel_initializer='glorot_uniform', shuffle_genes=False,
-                attention=False, dropout_testing=False, non_neg=False, repeated_outcomes=True, sparse_first_layer=True):
+                attention=False, dropout_testing=False, non_neg=False, repeated_outcomes=True, sparse_first_layer=True,
+                ignore_missing_histology=True):
     """
     Builds a Pathway Network (P-NET) model using TensorFlow 2.x Keras.
     
@@ -134,6 +213,7 @@ def build_pnet2(optimizer, w_reg, w_reg_outcomes, add_unk_genes=True, sparse=Tru
         non_neg: Whether to enforce non-negative constraints
         repeated_outcomes: Whether to use outcomes from all layers
         sparse_first_layer: Whether to use sparse layer for first layer
+        ignore_missing_histology: Whether to ignore missing histology data and use only genomic features
         
     Returns:
         model: Compiled Keras model
@@ -141,7 +221,42 @@ def build_pnet2(optimizer, w_reg, w_reg_outcomes, add_unk_genes=True, sparse=Tru
     """
     print(data_params)
     print(f'n_hidden_layers: {n_hidden_layers}')
-    data = Data(**data_params)
+    print(f'ignore_missing_histology: {ignore_missing_histology}')
+    
+    # Handle histology data based on ignore_missing_histology flag
+    if ignore_missing_histology:
+        # Current implementation: Use only genomic data (mutations, CNAs)
+        # Ensure data_params exclude any histology-related features
+        if data_params is None:
+            data_params = {}
+        
+        # Create a copy to avoid modifying original params
+        genomic_data_params = data_params.copy()
+        # Ensure 'params' key exists if it's expected by Data's __init__ for ProstateDataPaper
+        if 'params' not in genomic_data_params:
+            genomic_data_params['params'] = {}
+        genomic_data_params['include_histology_features'] = False
+        
+        data = Data(**genomic_data_params)
+        logging.info('Building P-NET2 model with genomic data only (histology ignored)')
+    else:
+        # Future implementation: Could integrate histology data pathway here
+        # For now, behave identically to ignore_missing_histology=True
+        logging.warning('ignore_missing_histology=False specified, but histology pathway not yet implemented. '
+                       'Using genomic data only.')
+        
+        if data_params is None:
+            data_params = {}
+        
+        # Create a copy to avoid modifying original params
+        genomic_data_params = data_params.copy()
+        # Ensure 'params' key exists if it's expected by Data's __init__ for ProstateDataPaper
+        if 'params' not in genomic_data_params:
+            genomic_data_params['params'] = {}
+        genomic_data_params['include_histology_features'] = True
+        
+        data = Data(**genomic_data_params)
+        logging.info('Building P-NET2 model with genomic data only (histology pathway not implemented)')
     x, y, info, cols = data.get_data()
     print(x.shape)
     print(y.shape)
@@ -260,10 +375,10 @@ def get_clinical_netowrk(ins, n_features, n_hids, activation):
     layers = []
     for i, n in enumerate(n_hids):
         if i == 0:
-            layer = Dense(n, input_shape=(n_features,), activation=activation, W_regularizer=l2(0.001),
+            layer = Dense(n, input_shape=(n_features,), activation=activation, kernel_regularizer=l2(0.001),
                           name='h_clinical' + str(i))
         else:
-            layer = Dense(n, activation=activation, W_regularizer=l2(0.001), name='h_clinical' + str(i))
+            layer = Dense(n, activation=activation, kernel_regularizer=l2(0.001), name='h_clinical' + str(i))
 
         layers.append(layer)
         drop = 0.5
@@ -430,7 +545,7 @@ def build_dense(optimizer, n_weights, w_reg, activation='tanh', loss='binary_cro
     ins = Input(shape=(n_features,), dtype='float32', name='inputs')
     n = np.ceil(float(n_weights) / float(n_features))
     print(n)
-    layer1 = Dense(units=int(n), activation=activation, W_regularizer=l2(w_reg), name='h0')
+    layer1 = Dense(units=int(n), activation=activation, kernel_regularizer=l2(w_reg), name='h0')
     outcome = layer1(ins)
     outcome = Dense(1, activation=activation_decision, name='output')(outcome)
     model = Model(inputs=[ins], outputs=outcome)
@@ -473,7 +588,7 @@ def build_pnet_KEGG(optimizer, w_reg, dropout=0.5, activation='tanh', use_bias=F
     n_genes = len(genes)
     genes = list(genes)
 
-    layer1 = Diagonal(n_genes, input_shape=(n_features,), activation=activation, W_regularizer=l2(w_reg),
+    layer1 = Diagonal(n_genes, input_shape=(n_features,), activation=activation, kernel_regularizer=l2(w_reg),
                       use_bias=use_bias, name='h0', kernel_initializer=kernel_initializer)
 
     ins = Input(shape=(n_features,), dtype='float32', name='inputs')
@@ -490,7 +605,7 @@ def build_pnet_KEGG(optimizer, w_reg, dropout=0.5, activation='tanh', use_bias=F
     n_genes, n_pathways = mapp.shape
     logging.info('n_genes, n_pathways {} {} '.format(n_genes, n_pathways))
 
-    hidden_layer = SparseTF(n_pathways, mapp, activation=activation, W_regularizer=l2(w_reg),
+    hidden_layer = SparseTF(n_pathways, mapp, activation=activation, kernel_regularizer=l2(w_reg),
                             name='h1', kernel_initializer=kernel_initializer,
                             use_bias=use_bias)
 

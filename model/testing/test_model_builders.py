@@ -22,32 +22,40 @@ logging.basicConfig(level=logging.INFO)
 class MockData:
     """
     Mock data class to simulate the Data class used in model building functions.
+    Now includes 'last_instance' for test inspection and 'include_histology_features' parameter.
     """
-    def __init__(self, id="test", type="prostate_paper", params=None, test_size=0.3, stratify=True):
-        """Initialize mock data with the same parameters as the real Data class."""
+    last_instance = None  # Class variable to store the last created instance
+
+    def __init__(self, id="test", type="prostate_paper", params=None, 
+                 test_size=0.3, stratify=True, include_histology_features=False): # Default changed to False
+        """Initialize mock data, tracking include_histology_features and storing instance."""
+        MockData.last_instance = self # Store this instance for inspection
         self.id = id
         self.type = type
-        self.params = params or {}
+        self.params_arg = params or {} # This 'params' is the inner dict for feature selection etc.
         self.test_size = test_size
         self.stratify = stratify
+        self.include_histology_features_received = include_histology_features # Store it
         
-        # Store dimensions from params if provided
-        if params and 'n_samples' in params:
-            self.n_samples = params['n_samples']
+        logging.info(f"MockData initialized. include_histology_features_received: {self.include_histology_features_received}")
+
+        effective_params_for_dims = self.params_arg
+
+        if effective_params_for_dims and 'n_samples' in effective_params_for_dims:
+            self.n_samples = effective_params_for_dims['n_samples']
         else:
             self.n_samples = 100
             
-        if params and 'n_features' in params:
-            self.n_features = params['n_features']
+        if effective_params_for_dims and 'n_features' in effective_params_for_dims:
+            self.n_features = effective_params_for_dims['n_features']
         else:
             self.n_features = 50
             
-        if params and 'n_genes' in params:
-            self.n_genes = params['n_genes']
+        if effective_params_for_dims and 'n_genes' in effective_params_for_dims:
+            self.n_genes = effective_params_for_dims['n_genes']
         else:
             self.n_genes = 20
         
-        # Create mock data
         self._generate_mock_data()
         
     def _generate_mock_data(self):
@@ -99,8 +107,9 @@ class MockData:
 
 
 # Import the refactored model building functions
+from unittest.mock import patch # Added for per-test patching
 from model.builders.builders_utils import get_pnet
-from model.builders.prostate_models import build_pnet2
+from model.builders.prostate_models import build_pnet, build_pnet2 # Added build_pnet
 
 # Create mock for ReactomeNetwork
 class MockReactomeNetwork:
@@ -120,33 +129,80 @@ class MockReactomeNetwork:
 # We need to patch imports
 import model.builders.prostate_models as pm
 import model.builders.builders_utils as bu
-pm.Data = MockData
-# Store original function for restoration
-original_get_layer_maps = bu.get_layer_maps
-
-# Mock get_layer_maps function
-def mock_get_layer_maps(genes, n_hidden_layers, direction='root_to_leaf', add_unk_genes=True):
+# pm.Data = MockData # Global patch removed, will use @patch decorator
+# Mock get_layer_maps function, to be used with @patch
+def _mock_get_layer_maps_for_test(genes, n_hidden_layers, direction='root_to_leaf', add_unk_genes=True):
     """Mock for the get_layer_maps function that doesn't require Reactome data."""
-    pathway_maps = {}
+    import pandas as pd
+    import numpy as np
     
-    # Create a simple mock pathway structure for each layer
-    for layer in range(n_hidden_layers):
-        layer_dict = {}
-        # Create 10 pathways per layer
-        for i in range(10):
-            pathway_name = f"pathway_{layer}_{i}"
-            # Each pathway connects to a subset of genes
-            gene_indices = list(range(i * len(genes) // 10, (i + 1) * len(genes) // 10))
-            layer_dict[pathway_name] = [genes[j] for j in gene_indices if j < len(genes)]
-        pathway_maps[layer] = layer_dict
+    maps = []
     
-    return pathway_maps
+    # Start with the genes as provided (this represents the input dimension to first pathway layer)
+    current_input_features = list(genes)
+    
+    # Create pathway structure for each layer
+    for i in range(n_hidden_layers):
+        # Calculate number of pathways for this layer
+        num_pathways = max(1, len(current_input_features) // (i + 2))
+        if num_pathways == 0:
+            num_pathways = 1
+        
+        # Create pathway names for this layer
+        pathway_names = [f'pathway_L{i}_{j}' for j in range(num_pathways)]
+        
+        # Add UNK pathway if requested (this creates an additional pathway, not input feature)
+        if add_unk_genes:
+            pathway_names.append('UNK')
+        
+        # Create mapping matrix: rows = current input features, columns = pathways
+        n_input_features = len(current_input_features)
+        n_pathways = len(pathway_names)
+        
+        # Initialize mapping matrix
+        mapping_matrix = np.zeros((n_input_features, n_pathways))
+        
+        # Assign input features to pathways (excluding UNK for now)
+        regular_pathways = pathway_names[:-1] if add_unk_genes else pathway_names
+        genes_per_pathway = max(1, n_input_features // len(regular_pathways)) if regular_pathways else n_input_features
+        
+        for j, pathway_name in enumerate(regular_pathways):
+            start_idx = j * genes_per_pathway
+            end_idx = min((j + 1) * genes_per_pathway, n_input_features)
+            
+            # Assign features to this pathway
+            for feature_idx in range(start_idx, end_idx):
+                if feature_idx < n_input_features:
+                    mapping_matrix[feature_idx, j] = 1
+        
+        # Handle UNK pathway - assign unassigned features to UNK
+        if add_unk_genes:
+            # Find features not assigned to any regular pathway
+            assigned_features = np.sum(mapping_matrix[:, :-1], axis=1)
+            unassigned_features = assigned_features == 0
+            mapping_matrix[unassigned_features, -1] = 1
+        
+        # Create DataFrame with input features as index and pathways as columns
+        filtered_map = pd.DataFrame(mapping_matrix, 
+                                   index=current_input_features, 
+                                   columns=pathway_names)
+        
+        maps.append(filtered_map)
+        
+        # For next layer, the input features are the pathway names from this layer
+        current_input_features = pathway_names
+    
+    return maps
 
-# Replace the original function with our mock
-bu.get_layer_maps = mock_get_layer_maps
+# bu.get_layer_maps = mock_get_layer_maps # Manual patch removed
 
 
 class TestModelBuilders(unittest.TestCase):
+    # Constants for log messages (to avoid typos in multiple tests)
+    LOG_MSG_GENOMIC_ONLY_IGNORED = "Building P-NET{} model with genomic data only (histology ignored)"
+    LOG_MSG_GENOMIC_ONLY_NOT_IMPL = "Building P-NET{} model with genomic data only (histology pathway not implemented)"
+    LOG_MSG_HISTOLOGY_NOT_IMPL_WARNING = "ignore_missing_histology=False specified, but histology pathway not yet implemented. Using genomic data only."
+
     """Test cases for the refactored model building functions."""
     
     def setUp(self):
@@ -156,15 +212,68 @@ class TestModelBuilders(unittest.TestCase):
         self.n_features = 100
         self.n_genes = 20
         
-        # Monkeypatch the Data class to use our MockData
-        # This is done at import time in the actual code, so we can't easily patch it
-        # Instead, we'll directly provide the mock data in our tests
-        
         # Create optimizer
         self.optimizer = optimizers.Adam(learning_rate=0.001)
         
+        # Default params for build_pnet2
+        self.default_params_pnet2 = {
+            'optimizer': self.optimizer,
+            'w_reg': 0.01,
+            'w_reg_outcomes': 0.01,
+            'dropout': 0.5,
+            'activation': 'relu',
+            'n_hidden_layers': 1,
+            'loss_weights': 1.0, 
+            'use_bias': False, 
+            'loss': 'binary_crossentropy',
+            'direction': 'root_to_leaf',
+            'batch_normal': False, 
+            'kernel_initializer': 'glorot_uniform',
+            'shuffle_genes': False, 
+            'attention': False, 
+            'dropout_testing': False, 
+            'non_neg': False, 
+            'repeated_outcomes': True, 
+            'sparse_first_layer': True,
+            'data_params': {
+                'id': 'test_pnet2',
+                'type': 'prostate_paper',
+                'params': {
+                    'n_samples': self.n_samples, 
+                    'n_features': self.n_features, 
+                    'n_genes': self.n_genes
+                }
+            }
+        }
+
+        # Default params for build_pnet (original)
+        self.default_params_pnet1 = {
+            'optimizer': self.optimizer,
+            'w_reg': 0.01,
+            'dropout': 0.5,
+            'activation': 'tanh', # Original build_pnet often used tanh
+            'n_hidden_layers': 1,
+            'use_bias': False,
+            'loss': 'binary_crossentropy',
+            'direction': 'root_to_leaf',
+            'batch_normal': False,
+            'kernel_initializer': 'glorot_uniform',
+            'shuffle_genes': False,
+            'reg_outcomes': False, # Specific to build_pnet
+            'data_params': {
+                'id': 'test_pnet1',
+                'type': 'prostate_paper',
+                'params': {
+                    'n_samples': self.n_samples, 
+                    'n_features': self.n_features, 
+                    'n_genes': self.n_genes
+                }
+            }
+        }
+        
         # Create default params for build_pnet2
-        self.default_params = {
+        self.default_params = { # Keep self.default_params for any existing tests that might use it, aliasing to pnet2 for now
+
             'optimizer': self.optimizer,
             'w_reg': 0.01,
             'w_reg_outcomes': 0.01,
@@ -184,10 +293,99 @@ class TestModelBuilders(unittest.TestCase):
         
     def tearDown(self):
         """Cleanup after each test case."""
-        # Restore the original get_layer_maps function
-        import model.builders.builders_utils as bu
-        bu.get_layer_maps = original_get_layer_maps
-    
+        # No need to restore get_layer_maps manually if using @patch on the class
+        pass
+
+    # --- Tests for build_pnet2 --- 
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet2_ignore_histology_default(self):
+        """Test build_pnet2 default behavior (ignore_missing_histology=True)."""
+        params = self.default_params_pnet2.copy()
+        # ignore_missing_histology is not in params, build_pnet2 defaults it to True
+
+        with self.assertLogs(level='INFO') as cm:
+            model, _ = build_pnet2(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertFalse(MockData.last_instance.include_histology_features_received)
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_IGNORED.format("2") in log_msg for log_msg in cm.output))
+
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet2_ignore_histology_true(self):
+        """Test build_pnet2 with ignore_missing_histology=True."""
+        params = self.default_params_pnet2.copy()
+        params['ignore_missing_histology'] = True
+
+        with self.assertLogs(level='INFO') as cm:
+            model, _ = build_pnet2(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertFalse(MockData.last_instance.include_histology_features_received)
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_IGNORED.format("2") in log_msg for log_msg in cm.output))
+
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet2_ignore_histology_false(self):
+        """Test build_pnet2 with ignore_missing_histology=False."""
+        params = self.default_params_pnet2.copy()
+        params['ignore_missing_histology'] = False
+
+        with self.assertLogs(level='INFO') as cm: # Captures INFO and WARNING
+            model, _ = build_pnet2(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertTrue(MockData.last_instance.include_histology_features_received)
+        # Check for specific warning and then the fallback info message
+        self.assertTrue(any(self.LOG_MSG_HISTOLOGY_NOT_IMPL_WARNING in log_msg for log_msg in cm.output), "Warning for not implemented histology missing")
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_NOT_IMPL.format("2") in log_msg for log_msg in cm.output), "Fallback to genomic only message missing")
+
+    # --- Tests for build_pnet (original) --- 
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet_ignore_histology_default(self):
+        """Test build_pnet default behavior (ignore_missing_histology=True)."""
+        params = self.default_params_pnet1.copy()
+        # ignore_missing_histology is not in params, build_pnet defaults it to True
+
+        with self.assertLogs(level='INFO') as cm:
+            model, _ = build_pnet(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertFalse(MockData.last_instance.include_histology_features_received)
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_IGNORED.format("") in log_msg for log_msg in cm.output))
+
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet_ignore_histology_true(self):
+        """Test build_pnet with ignore_missing_histology=True."""
+        params = self.default_params_pnet1.copy()
+        params['ignore_missing_histology'] = True
+
+        with self.assertLogs(level='INFO') as cm:
+            model, _ = build_pnet(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertFalse(MockData.last_instance.include_histology_features_received)
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_IGNORED.format("") in log_msg for log_msg in cm.output))
+
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
+    def test_build_pnet_ignore_histology_false(self):
+        """Test build_pnet with ignore_missing_histology=False."""
+        params = self.default_params_pnet1.copy()
+        params['ignore_missing_histology'] = False
+
+        with self.assertLogs(level='INFO') as cm:
+            model, _ = build_pnet(**params)
+        
+        self.assertIsInstance(model, tf.keras.Model)
+        self.assertTrue(MockData.last_instance.include_histology_features_received)
+        self.assertTrue(any(self.LOG_MSG_HISTOLOGY_NOT_IMPL_WARNING in log_msg for log_msg in cm.output), "Warning for not implemented histology missing")
+        self.assertTrue(any(self.LOG_MSG_GENOMIC_ONLY_NOT_IMPL.format("") in log_msg for log_msg in cm.output), "Fallback to genomic only message missing")
+
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
     def test_get_pnet_basic(self):
         """Test the get_pnet function with basic configuration."""
         # Create a mock data instance
@@ -239,6 +437,8 @@ class TestModelBuilders(unittest.TestCase):
         self.assertIsInstance(feature_names, dict)
         self.assertIn('h0', feature_names)
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_basic(self):
         """Test the build_pnet2 function with basic configuration."""
         # We've already monkeypatched the Data class in the imports
@@ -291,6 +491,8 @@ class TestModelBuilders(unittest.TestCase):
             # No need to restore Data class as we've patched it globally
             pass
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_single_output(self):
         """Test the build_pnet2 function with single output configuration."""
         # We've already monkeypatched the Data class in the imports
@@ -336,6 +538,8 @@ class TestModelBuilders(unittest.TestCase):
             # No need to restore Data class as we've patched it globally
             pass
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_with_sparse_options(self):
         """Test the build_pnet2 function with different sparse layer options."""
         # We've already monkeypatched the Data class in the imports
@@ -376,6 +580,8 @@ class TestModelBuilders(unittest.TestCase):
             # No need to restore Data class as we've patched it globally
             pass
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_with_batch_norm(self):
         """Test the build_pnet2 function with batch normalization."""
         # We've already monkeypatched the Data class in the imports
@@ -407,6 +613,8 @@ class TestModelBuilders(unittest.TestCase):
             # No need to restore Data class as we've patched it globally
             pass
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_with_attention(self):
         """Test the build_pnet2 function with attention mechanism."""
         # We've already monkeypatched the Data class in the imports
@@ -438,6 +646,8 @@ class TestModelBuilders(unittest.TestCase):
             # No need to restore Data class as we've patched it globally
             pass
     
+    @patch('model.builders.builders_utils.get_layer_maps', new=_mock_get_layer_maps_for_test)
+    @patch('model.builders.prostate_models.Data', new=MockData)
     def test_build_pnet2_with_multiple_hidden_layers(self):
         """Test the build_pnet2 function with multiple hidden layers."""
         # We've already monkeypatched the Data class in the imports
