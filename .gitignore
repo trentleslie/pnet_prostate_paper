@@ -32,3 +32,16 @@ Thumbs.db
 
 # Temporary files
 model/layers_custom_tf2.py
+
+# Python build artifacts
+*.egg-info/
+build/
+dist/
+
+# General temporary files (catch-all)
+*.log
+*.tmp
+*.swp
+
+# Generated output
+_plots/
