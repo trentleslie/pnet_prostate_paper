@@ -1,0 +1,189 @@
+h0: &id003 !!python/object/apply:pandas.core.indexes.base._new_Index
+- &id004 !!python/name:pandas.core.indexes.base.Index ''
+- data: !!python/object/apply:numpy._core.multiarray._reconstruct
+    args:
+    - &id001 !!python/name:numpy.ndarray ''
+    - !!python/tuple
+      - 0
+    - !!binary |
+      Yg==
+    state: !!python/tuple
+    - 1
+    - !!python/tuple
+      - 57
+    - &id005 !!python/object/apply:numpy.dtype
+      args:
+      - O8
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 63
+    - false
+    - - CALN1
+      - RNF10
+      - OR14J1
+      - HIVEP2
+      - ZNF646
+      - METTL2B
+      - RPS6KB2
+      - EN1
+      - SNHG12
+      - SEC23IP
+      - MFAP1
+      - NKX2-6
+      - SPINK14
+      - THBS3
+      - PAM
+      - DHX15
+      - TRPM5
+      - CCDC146
+      - NQO1
+      - SERPINA6
+      - CANT1
+      - ANAPC13
+      - NMNAT3
+      - USP29
+      - PRAMEF20
+      - SHROOM3
+      - INA
+      - FLII
+      - UTP3
+      - NDST4
+      - SOWAHC
+      - CCDC148
+      - CSN1S1
+      - KSR1
+      - FN3K
+      - AKAP14
+      - SATB2
+      - SLK
+      - EIF2AK3
+      - ZNF207
+      - TTC30B
+      - RPL11
+      - MUC1
+      - LCE3D
+      - ATG7
+      - NRIP3
+      - AKR1C4
+      - POU3F2
+      - SAMD9L
+      - DPEP3
+      - PLBD2
+      - COX8A
+      - LGALS8
+      - ZNF471
+      - ZNF490
+      - INPP5A
+      - BSCL2
+  name: null
+h1:
+- R-HSA-1474165
+- R-HSA-382551
+- R-HSA-4839726
+- R-HSA-74160
+- R-HSA-8953897
+- R-HSA-1852241
+- R-HSA-69306
+- R-HSA-8953854
+- R-HSA-73894
+- R-HSA-1430728
+- R-HSA-397014
+- R-HSA-1500931
+- R-HSA-109582
+- R-HSA-8963743
+- R-HSA-168256
+- R-HSA-1643685
+- R-HSA-112316
+- R-HSA-162582
+- R-HSA-392499
+- R-HSA-1266738
+- R-HSA-5357801
+- R-HSA-5205647
+- R-HSA-1474244
+- R-HSA-1640170
+- R-HSA-5653656
+- R-HSA-400253
+- UNK
+h2:
+- root
+- UNK
+inputs: !!python/object/apply:pandas.core.indexes.base._new_Index
+- !!python/name:pandas.core.indexes.multi.MultiIndex ''
+- codes:
+  - !!python/object/apply:numpy._core.multiarray._reconstruct
+    args:
+    - *id001
+    - !!python/tuple
+      - 0
+    - !!binary |
+      Yg==
+    state: !!python/tuple
+    - 1
+    - !!python/tuple
+      - 114
+    - &id002 !!python/object/apply:numpy.dtype
+      args:
+      - i1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - false
+    - !!binary |
+      AAABAQICAwMEBAUFBgYHBwgICQkKCgsLDAwNDQ4ODw8QEBEREhITExQUFRUWFhcXGBgZGRoaGxsc
+      HB0dHh4fHyAgISEiIiMjJCQlJSYmJycoKCkpKiorKywsLS0uLi8vMDAxMTIyMzM0NDU1NjY3Nzg4
+  - !!python/object/apply:numpy._core.multiarray._reconstruct
+    args:
+    - *id001
+    - !!python/tuple
+      - 0
+    - !!binary |
+      Yg==
+    state: !!python/tuple
+    - 1
+    - !!python/tuple
+      - 114
+    - *id002
+    - false
+    - !!binary |
+      AAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEA
+      AQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQABAAEAAQAB
+  levels:
+  - *id003
+  - !!python/object/apply:pandas.core.indexes.base._new_Index
+    - *id004
+    - data: !!python/object/apply:numpy._core.multiarray._reconstruct
+        args:
+        - *id001
+        - !!python/tuple
+          - 0
+        - !!binary |
+          Yg==
+        state: !!python/tuple
+        - 1
+        - !!python/tuple
+          - 2
+        - *id005
+        - false
+        - - mut_important
+          - cnv
+      name: null
+  names:
+  - null
+  - null
+  sortorder: null

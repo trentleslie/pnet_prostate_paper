@@ -1,0 +1,96 @@
+# Configuration for minimal P-NET training on prostate cancer dataset
+# This YAML file defines parameters for data loading and model construction
+
+data_params:
+  # Required parameters for Data class
+  id: 'minimal_pnet_training'
+  type: 'prostate_paper'
+  
+  # Parameters for ProstateDataPaper - use default data types
+  params:
+    data_type: ['mut_important', 'cnv']  # Use default mutation and copy number data
+    selected_genes: '/procedure/pnet_prostate_paper/test_data/minimal_prostate_set/genes/minimal_selected_genes.csv'
+    combine_type: 'union'  # Use union to combine different data types
+    use_coding_genes_only: false
+    mut_binary: true  # Binary mutation encoding
+    balanced_data: false
+    cnv_levels: 3  # 3-level CNV encoding
+    cnv_filter_single_event: true
+    
+  # Data splitting parameters
+  test_size: 0.3
+  stratify: true
+  
+  # Histology features settings
+  include_histology_features: false
+
+model_params:
+  # Model architecture parameters
+  n_hidden_layers: 1
+  direction: 'root_to_leaf'
+  
+  # Network layer settings
+  sparse: true
+  sparse_first_layer: true
+  add_unk_genes: true
+  use_bias: false
+  
+  # Activation functions
+  activation: 'tanh'
+  loss: 'binary_crossentropy'
+  
+  # Regularization
+  w_reg: 0.001
+  w_reg_outcomes: 0.001
+  dropout: 0.5
+  
+  # Training parameters
+  optimizer: 'adam'
+  learning_rate: 0.001
+  epochs: 5  # Reduced for testing
+  batch_size: 32
+  
+  # Model initialization
+  kernel_initializer: 'glorot_uniform'
+  
+  # Advanced options
+  attention: false
+  dropout_testing: false
+  non_neg: false
+  repeated_outcomes: true
+  batch_normal: false
+  shuffle_genes: false
+  
+  # Loss configuration
+  loss_weights: 1.0
+  
+  # Histology handling
+  ignore_missing_histology: true
+
+# Training configuration
+training_params:
+  # Random seeds for reproducibility
+  random_seed: 42
+  
+  # Early stopping
+  early_stopping: true
+  patience: 10
+  
+  # Model checkpointing
+  save_checkpoints: true
+  checkpoint_dir: '/procedure/pnet_prostate_paper/checkpoints/minimal_pnet/'
+  save_best_only: true
+  
+  # Validation split during training
+  validation_split: 0.2
+  
+  # Metrics to track
+  metrics: ['accuracy', 'auc']
+  
+  # Output paths
+  results_dir: '/procedure/pnet_prostate_paper/results/'
+  plot_save_path: '/procedure/pnet_prostate_paper/results/minimal_pnet_roc_curve.png'
+  
+  # Logging
+  verbose: 1
+  log_level: 'INFO'

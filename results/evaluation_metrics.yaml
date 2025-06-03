@@ -1,0 +1,19 @@
+roc_auc: !!python/object/apply:numpy._core.multiarray.scalar
+- !!python/object/apply:numpy.dtype
+  args:
+  - f8
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  4aNnK++y3j8=
+test_accuracy: 0.680816650390625
+test_loss: 2.023458957672119
