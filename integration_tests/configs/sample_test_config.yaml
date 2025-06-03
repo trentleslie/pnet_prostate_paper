@@ -1,0 +1,51 @@
+# Sample Test Configuration for P-NET Integration Testing
+
+# Test Case Description
+description: "Sample test case: Train a simple P-NET model on minimal data for a few epochs."
+
+# Data Configuration
+data:
+  # Path to the dataset (relative to project root or absolute)
+  # For now, we'll use the existing minimal dataset.
+  dataset_path: "test_data/minimal_prostate_set/"
+  fold: 0 # Cross-validation fold, if applicable
+  seed: 42 # Random seed for data splitting/shuffling
+
+# Model Configuration
+model:
+  type: "pnet" # Could be 'pnet', 'pnet2', 'dense_baseline', etc.
+  params:
+    n_hidden_layers: 1
+    dropout: 0.5
+    sparse: True
+    activation: "tanh"
+    w_reg: 0.001
+    use_bias: False
+    add_unk_genes: True
+    direction: "root_to_leaf"
+  # Pathway information (if not inferred from data_params or globally set)
+  # pathway_file: "path/to/pathways.sif" 
+  # pathway_type: "reactome"
+
+# Training Configuration
+training:
+  optimizer: "Adam"
+  learning_rate: 0.001
+  epochs: 5
+  batch_size: 4
+  early_stopping:
+    monitor: "val_loss"
+    patience: 3
+    min_delta: 0.001
+  checkpointing:
+    enabled: True
+    monitor: "val_loss"
+    save_best_only: True
+    # checkpoint_dir: "results/checkpoints/" # Will be dynamically set by test script
+
+# Validation & Reporting
+validation:
+  metrics: ["accuracy", "auc"] # Metrics to compute on validation set
+reporting:
+  report_dir: "results/reports/" # Base directory for reports
+  log_level: "INFO" # Overrides global log level for this specific test if needed
