@@ -62,8 +62,8 @@ def load_data(filename, selected_genes=None):
         if len(intersect) < len(selected_genes):
             # raise Exception('wrong gene')
             logging.warning('some genes dont exist in the original data set')
-        x = x.loc[:, intersect]
-        genes = intersect
+        x = x.loc[:, list(intersect)]  # Convert set to list for pandas compatibility
+        genes = list(intersect)  # Convert to list
     logging.info('loaded data %d samples, %d variables, %d responses ' % (x.shape[0], x.shape[1], response.shape[0]))
     logging.info(len(genes))
     return x, response, samples, genes

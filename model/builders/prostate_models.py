@@ -170,8 +170,10 @@ def build_pnet(optimizer, w_reg, add_unk_genes=True, sparse=True, dropout=0.5, u
     # loss_weights = [l*np.exp(l) for l in loss_weights]
     # loss_weights=1
     print(f'loss_weights: {loss_weights}')
+    # Use AUC metric for TF2 compatibility
+    auc_metric = tf.keras.metrics.AUC(name='auc')
     model.compile(optimizer=optimizer,
-                  loss=['binary_crossentropy'] * n_outputs, metrics=[f1], loss_weights=loss_weights)
+                  loss=['binary_crossentropy'] * n_outputs, metrics=[['accuracy', auc_metric]] * n_outputs, loss_weights=loss_weights)
     # loss=['binary_crossentropy']*(n_hidden_layers +2))
     logging.info('done compiling')
 
@@ -342,15 +344,18 @@ def build_pnet2(optimizer, w_reg, w_reg_outcomes, add_unk_genes=True, sparse=Tru
         # model.compile(optimizer=optimizer, loss=losses, metrics=metrics, loss_weights=current_loss_weights)
         
         # Option 2: Use list format for all outputs (current implementation)
+        # Use AUC metric for TF2 compatibility
+        auc_metric = tf.keras.metrics.AUC(name='auc')
         model.compile(optimizer=optimizer,
                       loss=['binary_crossentropy'] * n_outputs, 
-                      metrics=[f1], 
+                      metrics=[['accuracy', auc_metric]] * n_outputs,  # Metrics need to be per output
                       loss_weights=current_loss_weights)
     else:
         # Single output compilation
+        auc_metric = tf.keras.metrics.AUC(name='auc')
         model.compile(optimizer=optimizer,
                       loss='binary_crossentropy', 
-                      metrics=[f1])
+                      metrics=['accuracy', auc_metric])
 
     logging.info('done compiling')
 
