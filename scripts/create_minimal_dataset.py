@@ -20,7 +20,7 @@ SPLITS_OUT_DIR = os.path.join(BASE_OUTPUT_DIR, "splits")
 FULL_GENES_FILE = os.path.join(FULL_DATA_BASE_DIR, "genes", "tcga_prostate_expressed_genes_and_cancer_genes.csv")
 FULL_MUT_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "processed", "P1000_final_analysis_set_cross_important_only.csv")
 FULL_CNA_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "processed", "P1000_data_CNA_paper.csv")
-FULL_RNA_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "processed", "P1000_RNA_seq_Expr_t_median_outlier_removed.csv") # Assuming this is the RNA file
+FULL_RNA_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "raw_data", "outputs_p1000_rna_n=660_tpm_matrix.tsv") # Updated path to actual RNA file
 FULL_RESPONSE_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "processed", "response_paper.csv")
 
 FULL_TRAIN_SPLIT_FILE = os.path.join(FULL_DATA_BASE_DIR, "prostate", "splits", "training_set.csv")
