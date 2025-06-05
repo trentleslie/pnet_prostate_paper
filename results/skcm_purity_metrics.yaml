@@ -1,0 +1,23 @@
+correlation: !!python/object/apply:numpy._core.multiarray.scalar
+- &id001 !!python/object/apply:numpy.dtype
+  args:
+  - f8
+  - false
+  - true
+  state: !!python/tuple
+  - 3
+  - <
+  - null
+  - null
+  - null
+  - -1
+  - -1
+  - 0
+- !!binary |
+  mXvqg0nLuz8=
+mse: 0.08315259543322663
+p_value: !!python/object/apply:numpy._core.multiarray.scalar
+- *id001
+- !!binary |
+  Ft02ys8n4D8=
+r2: -0.19102728669410407
