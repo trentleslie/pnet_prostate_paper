@@ -1,0 +1,49 @@
+# Configuration for SKCM tumor purity prediction with P-NET
+# This is a regression task predicting continuous purity values (0-1)
+
+model_params:
+  # Model architecture parameters
+  n_hidden_layers: 2          # Number of pathway layers
+  activation: 'relu'          # Activation function for hidden layers
+  dropout: 0.3                # Dropout rate (lower for regression)
+  
+  # Regularization
+  w_reg: 0.001               # L2 weight regularization
+  
+  # Training parameters
+  optimizer: 'adam'
+  learning_rate: 0.001
+  epochs: 100                # More epochs for regression
+  batch_size: 32
+  
+  # Loss function
+  loss: 'mse'                # Mean squared error for regression
+
+training_params:
+  # Random seeds for reproducibility
+  random_seed: 42
+  
+  # Early stopping
+  early_stopping: true
+  patience: 15               # More patience for regression
+  
+  # Model checkpointing
+  save_checkpoints: true
+  checkpoint_dir: '/procedure/pnet_prostate_paper/checkpoints/skcm_purity/'
+  save_best_only: true
+  
+  # Output paths
+  results_dir: '/procedure/pnet_prostate_paper/results/'
+  
+  # Loss configuration
+  use_weighted_loss: false   # Set to true to use weighted MSE loss
+  
+  # Logging
+  verbose: 1
+  log_level: 'INFO'
+
+# Data parameters (used if creating synthetic data)
+data_params:
+  n_samples: 200            # Number of synthetic samples
+  n_genes: 500              # Number of genes in synthetic data
+  test_size: 0.2            # Train/test split ratio
