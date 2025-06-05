@@ -19,7 +19,7 @@ _logs.zip
 
 # Data
 _database.zip
-#_database/
+_database/
 
 # OS generated files
 .DS_Store
