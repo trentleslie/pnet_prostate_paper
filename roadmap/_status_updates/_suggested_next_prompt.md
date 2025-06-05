@@ -1,37 +1,39 @@
-# Suggested Next Prompt for P-NET Project
+# Suggested Next Steps for P-NET Project
 
-## Context Brief
+## 1. Context Brief
+We have successfully debugged and refactored the SKCM tumor purity prediction scripts (`/procedure/pnet_prostate_paper/notebooks/SKCM_purity_tf2.py` and `/procedure/pnet_prostate_paper/scripts/run_skcm_purity_tf2.py`), which are now functional using synthetic data. The "P-NET Full Training Pipeline Integration Testing" feature is fully planned but awaits your input on several strategic questions before implementation can begin.
 
-The detailed planning phase for "P-NET Full Training Pipeline Integration Testing" is now complete. The planning documents (`README.md`, `spec.md`, `design.md` located in `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/`) have been updated to align with the primary goal of replicating the Elmarakeby et al., Nature 2021 paper using the modernized Python 3.11/TensorFlow 2.x P-NET codebase. We are now awaiting your input on several key strategic questions to finalize this plan and move the feature into implementation.
+## 2. Initial Steps
+1.  Please review the overall project context, guidelines, and workflow conventions documented in `/procedure/pnet_prostate_paper/CLAUDE.md`.
+2.  Please review the latest status update summarizing our recent progress and current project state: `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-06-05-skcm-script-debug-and-project-status.md`.
 
-## Initial Steps
+## 3. Work Priorities
+Based on the current project status, please consider the following priorities for your next actions:
 
-1.  Review the overall project context and your role by reading `/procedure/pnet_prostate_paper/CLAUDE.md`.
-2.  Review the latest status update document: `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-06-03-pnet-integration-test-planning-update.md` for a comprehensive overview of recent accomplishments, current project state, and detailed next steps.
+1.  **Provide Answers to Strategic Questions for "P-NET Full Training Pipeline Integration Testing":**
+    *   Your input is crucial to move this feature from "Planning" to "In Progress." The questions are detailed in the status update (Section 5) and were initially posed after the planning documents in `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/` were prepared.
+    *   These questions cover: Priority/Timeline, Minimal Test Data Strategy, Performance Acceptance Criteria, `_params.yml` Replication Strategy, BCR Data Availability, and Baseline Model Comparisons.
 
-## Work Priorities
+2.  **Decide on Next Steps for SKCM Purity Scripts:**
+    *   The scripts are functional with synthetic data.
+    *   **Option A:** If you wish to run them with real SKCM data, please ensure the necessary data files (RNA-seq, CNA, purity) are available and correctly placed in `/procedure/pnet_prostate_paper/data/_database/skcm_tcga_pan_can_atlas_2018/`. Let Cascade know if you need assistance with verifying paths or adapting the scripts if filenames differ.
+    *   **Option B:** If validation with synthetic data is sufficient for now, we can consider this task complete and focus on other priorities.
 
-1.  **Address Open Strategic Questions:** Provide answers to the questions listed in Section 5 ("Open Questions & Considerations") of the status update (`/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-06-03-pnet-integration-test-planning-update.md`). These are critical for finalizing the "P-NET Full Training Pipeline Integration Testing" plan. The questions cover:
-    *   Priority & Timeline for moving the feature to "In Progress".
-    *   Minimal Test Data strategy for Phase 1.
-    *   Performance Acceptance Criteria against paper results.
-    *   `_params.yml` Replication Strategy (related to roadmap item `FP002`).
-    *   Biochemical Recurrence (BCR) Data Availability and fallback.
-    *   Approach for Baseline Model Comparisons.
-2.  **Approve "In Progress" Transition:** Based on your answers and satisfaction with the current plan, formally approve moving the "P-NET Full Training Pipeline Integration Testing" feature to the "In Progress" stage of the roadmap.
-3.  **Initiate "In Progress" Stage Gate (If Approved):** If you approve the transition, instruct Cascade to generate and execute the "In Progress" stage gate prompt for the Claude code instance. This prompt will instruct Claude to create detailed task lists and implementation notes for the integration testing feature, based on the updated planning documents.
-4.  **Plan `_params.yml` (`FP002`) Solution:** Discuss and define a concrete plan of action for addressing the `_params.yml` challenge (roadmap item `FP002_handle_missing_params_yml.md`). This is crucial for the later phases of integration testing that involve real data and specific experimental setups from the paper.
+3.  **Address `_params.yml` Handling (`FP002_handle_missing_params_yml.md`):**
+    *   This is a recurring critical item for full paper replication. If the integration testing is prioritized, a concrete plan for `_params.yml` will be needed soon.
 
-## References
+## 4. Key References
+*   **Latest Status Update:** `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-06-05-skcm-script-debug-and-project-status.md`
+*   **SKCM Purity Scripts:**
+    *   `/procedure/pnet_prostate_paper/notebooks/SKCM_purity_tf2.py`
+    *   `/procedure/pnet_prostate_paper/scripts/run_skcm_purity_tf2.py`
+*   **Integration Testing Planning Docs:** `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/`
+*   **Prompt for SKCM Debugging (example of detailed prompt):** `/procedure/pnet_prostate_paper/roadmap/_active_prompts/2025-06-05-074500-debug-skcm-purity-script.md`
 
-*   Latest Status Update: `/procedure/pnet_prostate_paper/roadmap/_status_updates/2025-06-03-pnet-integration-test-planning-update.md`
-*   Integration Testing Planning Documents:
-    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/README.md`
-    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/spec.md`
-    *   `/procedure/pnet_prostate_paper/roadmap/1_planning/pnet_full_training_integration_testing/design.md`
-*   Source Paper: `/procedure/pnet_prostate_paper/paper.txt`
-*   Refactoring Technical Notes: `/procedure/pnet_prostate_paper/roadmap/technical_notes/pnet_refactor.md`
+## 5. Workflow Integration
+For any chosen next step, remember that Cascade can assist in:
+*   Analyzing requirements.
+*   Generating detailed, actionable prompts for a Claude code instance if implementation or further investigation is needed.
+*   Processing feedback from Claude and iterating on solutions.
 
-## Workflow Integration
-
-Please provide your responses to the strategic questions first. Once these are clarified, you can direct Cascade to proceed with the roadmap stage transition for the integration testing feature. For the `_params.yml` task, outline your preferred approach or any initial thoughts to guide further planning and implementation.
+Please indicate how you'd like to proceed.
